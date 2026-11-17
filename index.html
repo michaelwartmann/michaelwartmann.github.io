@@ -1,139 +1,144 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
 <head>
-
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="">
-    <meta name="author" content="">
-
-    <title></title>
-
-    <!-- Bootstrap Core CSS -->
-    <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Theme CSS -->
-    <link href="css/clean-blog.min.css" rel="stylesheet">
-
-    <!-- Custom Fonts -->
-    <link href="vendor/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
-    <link href='https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic' rel='stylesheet' type='text/css'>
-    <link href='https://fonts.googleapis.com/css?family=Open+Sans:300italic,400italic,600italic,700italic,800italic,400,300,600,700,800' rel='stylesheet' type='text/css'>
-
-    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
-    <!--[if lt IE 9]>
-        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
-        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
-    <![endif]-->
-
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>向日葵.世界 · Sunflower World</title>
+<meta name="description" content="Small free apps by Michael Wartmann. No ads, no accounts, no tracking.">
+<meta name="theme-color" content="#faf6ec">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/favicon-64.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>
+:root{--bg:#faf6ec;--card:#fffdf8;--ink:#2b2620;--muted:#6b6257;--line:#e9e1cf;--sun:#e8a317;--sun-ink:#7a4f00;--leaf:#4a7c59;--r:16px}
+@media (prefers-color-scheme:dark){:root{--bg:#1c1a16;--card:#25221d;--ink:#f3ede2;--muted:#b9ae9c;--line:#3a352c;--sun:#f2b52f;--sun-ink:#f2b52f;--leaf:#8fc29e}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,"PingFang SC","Noto Sans CJK SC","Microsoft YaHei",sans-serif}
+main{max-width:640px;margin:0 auto;padding:16px 18px 48px}
+a{color:inherit}
+.skip{position:absolute;left:-999px}.skip:focus{left:12px;top:12px;background:var(--card);padding:8px 12px;border-radius:8px}
+header{display:flex;align-items:center;gap:12px;padding:8px 0 4px}
+header img{width:48px;height:48px;border-radius:12px}
+header h1{font-size:1.35rem;margin:0;line-height:1.2}
+header h1 small{display:block;font-size:.85rem;font-weight:400;color:var(--muted)}
+.langs{margin-left:auto;display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.langs button{all:unset;cursor:pointer;min-width:44px;min-height:44px;display:grid;place-items:center;font-size:.9rem;color:var(--muted)}
+.langs button[aria-pressed=true]{background:var(--sun);color:#2b2620;font-weight:600}
+.langs button:focus-visible,.btn:focus-visible,summary:focus-visible{outline:3px solid var(--leaf);outline-offset:2px}
+.intro{font-size:1.1rem;margin:18px 0 6px}
+.pledge{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 22px;padding:0;list-style:none}
+.pledge li{font-size:.85rem;border:1px solid var(--line);border-radius:999px;padding:4px 10px;color:var(--muted)}
+h2{font-size:1.1rem;margin:28px 0 10px}
+.apps{display:grid;gap:12px;padding:0;margin:0;list-style:none}
+.app{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:grid;grid-template-columns:56px 1fr;gap:4px 14px}
+.app .ico{width:56px;height:56px;border-radius:14px;grid-row:span 3;display:grid;place-items:center;font-size:30px;overflow:hidden}
+.app .ico img{width:100%;height:100%}
+.app h3{margin:0;font-size:1.05rem}
+.app p{margin:0;color:var(--muted);font-size:.95rem}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.tags span{font-size:.78rem;border-radius:6px;padding:1px 7px;background:var(--bg);border:1px solid var(--line)}
+.actions{grid-column:1/-1;display:flex;gap:8px;margin-top:10px}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 18px;border-radius:12px;text-decoration:none;font-weight:600;background:var(--sun);color:#2b2620}
+details{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:0 14px;margin-top:10px}
+summary{cursor:pointer;min-height:48px;display:flex;align-items:center;font-weight:600}
+details > div{padding:0 0 14px}
+details ol{margin:0;padding-left:1.2em}
+.about p{margin:0 0 12px}
+footer{margin-top:36px;color:var(--muted);font-size:.85rem;text-align:center}
+@media (prefers-reduced-motion:no-preference){.app{transition:transform .15s}.app:hover{transform:translateY(-1px)}}
+</style>
 </head>
-
 <body>
+<a class="skip" href="#apps" data-i18n="skip">Skip to the apps</a>
+<main>
+<header>
+  <img src="icons/icon-192.png" alt="" width="48" height="48">
+  <h1>向日葵.世界<small data-i18n="sub">Sunflower World</small></h1>
+  <div class="langs" role="group" aria-label="Language">
+    <button type="button" data-lang="en" lang="en">EN</button>
+    <button type="button" data-lang="de" lang="de">DE</button>
+    <button type="button" data-lang="zh" lang="zh">中文</button>
+  </div>
+</header>
 
-    <!-- Navigation -->
-    <nav class="navbar navbar-default navbar-custom navbar-fixed-top">
-        <div class="container-fluid">
-            <div class="navbar-header page-scroll">
-                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
-                    <span class="sr-only">Toggle navigation</span>
-                    <i class="fa fa-bars"></i>
-                </button>
-            </div>
+<p class="intro" data-i18n="intro">Small apps, free for everyone. Open one, put it on your home screen, and use it.</p>
+<ul class="pledge">
+  <li data-i18n="p1">No ads</li><li data-i18n="p2">No accounts</li><li data-i18n="p3">No tracking</li><li data-i18n="p4">Free</li>
+</ul>
 
-            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-                <ul class="nav navbar-nav navbar-right">
-                    <li></li>
-                    <li></li>
-                    <li></li>
-                    <li></li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+<h2 id="apps" data-i18n="appsH">Apps</h2>
+<ul class="apps">
+  <li class="app">
+    <div class="ico"><img src="apps/yoga.png" alt="" width="56" height="56"></div>
+    <h3>Mat Cat Yoga</h3>
+    <p data-i18n="yoga">A yoga practice made for you, guided on your phone.</p>
+    <div class="tags"><span>EN · DE · 中文</span><span data-i18n="offline">Works offline</span></div>
+    <div class="actions"><a class="btn" href="https://michaelwartmann.github.io/yogaapp/" data-i18n="open">Open</a></div>
+  </li>
+  <li class="app">
+    <div class="ico" style="background:#c8102e;color:#fff" aria-hidden="true">步</div>
+    <h3>一步一步 · Step by Step</h3>
+    <p data-i18n="step">A Mandarin journey from a language app to the HSK exams, with free practice sets and an Anki deck.</p>
+    <div class="tags"><span>EN · 中文</span></div>
+    <div class="actions"><a class="btn" href="https://michaelwartmann.github.io/learning-journey/" data-i18n="open">Open</a></div>
+  </li>
+  <li class="app">
+    <div class="ico" style="background:#2f5d8a;color:#fff" aria-hidden="true">数</div>
+    <h3>Sudoku-Meischter Kimchi</h3>
+    <p data-i18n="sudoku">Learn Sudoku the human way, explained by a friendly Swabian teacher.</p>
+    <div class="tags"><span>DE</span></div>
+    <div class="actions"><a class="btn" href="https://michaelwartmann.github.io/Sudoku-Master-Kimchi/" data-i18n="open">Open</a></div>
+  </li>
+  <li class="app">
+    <div class="ico" style="background:#1f1b2e" aria-hidden="true"><svg viewBox="0 0 56 56" width="56" height="56"><circle cx="28" cy="28" r="15" fill="none" stroke="#f2b52f" stroke-width="3"/><circle cx="28" cy="28" r="5" fill="#f2b52f"/><path d="M28 9v6M28 41v6M9 28h6M41 28h6" stroke="#f2b52f" stroke-width="3" stroke-linecap="round"/></svg></div>
+    <h3>Aletheia</h3>
+    <p data-i18n="aletheia">A small picture language for how we experience friendship, grief, joy — compose your own and compare.</p>
+    <div class="tags"><span>EN · DE</span><span data-i18n="offline">Works offline</span></div>
+    <div class="actions"><a class="btn" href="https://aletheia-mikeio.vercel.app/" data-i18n="open">Open</a></div>
+  </li>
+</ul>
 
-    <!-- Page Header -->
-    <header class="intro-header" style="background-image: url('img/logo_web.jpg')">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                    <div class="site-heading">
-                        <hr class="small">
-                    </div>
-                </div>
-            </div>
-        </div>
-    </header>
+<details>
+  <summary data-i18n="installH">How to put an app on your home screen</summary>
+  <div>
+    <p><strong>Android (Chrome)</strong></p>
+    <ol><li data-i18n="a1">Open the app.</li><li data-i18n="a2">Tap the menu ⋮ at the top right.</li><li data-i18n="a3">Tap “Install app” or “Add to Home screen”.</li></ol>
+    <p><strong>iPhone (Safari)</strong></p>
+    <ol><li data-i18n="i1">Open the app in Safari.</li><li data-i18n="i2">Tap the share button □↑ at the bottom.</li><li data-i18n="i3">Tap “Add to Home Screen”.</li></ol>
+  </div>
+</details>
 
-    <!-- Main Content -->
-    <div class="container">
-        <div class="row">
-            <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                <div class="post-preview">
-                    <a href="#"></a>
-                </div>
-                <hr>
+<section class="about" aria-labelledby="aboutH">
+  <h2 id="aboutH" data-i18n="aboutH">About</h2>
+  <p data-i18n="ab1">Hi, I’m Michael. I build small apps with Claude: for my family and friends, for the clubs I work with, and for anyone who can use them.</p>
+  <p data-i18n="ab2">By day I’m an engineer, a tennis coach and a teacher in the making. I also wrote a book, <em>Aletheia</em>. I speak German, Dutch and English, and I’m learning Chinese step by step.</p>
+  <p data-i18n="ab3">Everything here is free and open source. It comes from us and it’s for us.</p>
+</section>
 
-                <!-- Pager -->
-                <ul class="pager">
-                    <li class="next"></li>
-                </ul>
-            </div>
-        </div>
-    </div>
-
-    <hr>
-
-    <!-- Footer -->
-    <footer>
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
-                    <ul class="list-inline text-center">
-                        <li>
-                            <a href="#">
-                                <span class="fa-stack fa-lg">
-                                    <i class="fa fa-circle fa-stack-2x"></i>
-                                    <i class="fa fa-twitter fa-stack-1x fa-inverse"></i>
-                                </span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#">
-                                <span class="fa-stack fa-lg">
-                                    <i class="fa fa-circle fa-stack-2x"></i>
-                                    <i class="fa fa-linkedin fa-stack-1x fa-inverse"></i>
-                                </span>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#">
-                                <span class="fa-stack fa-lg">
-                                    <i class="fa fa-circle fa-stack-2x"></i>
-                                    <i class="fa fa-github fa-stack-1x fa-inverse"></i>
-                                </span>
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </footer>
-
-    <!-- jQuery -->
-    <script src="vendor/jquery/jquery.min.js"></script>
-
-    <!-- Bootstrap Core JavaScript -->
-    <script src="vendor/bootstrap/js/bootstrap.min.js"></script>
-
-    <!-- Contact Form JavaScript -->
-    <script src="js/jqBootstrapValidation.js"></script>
-    <script src="js/contact_me.js"></script>
-
-    <!-- Theme JavaScript -->
-    <script src="js/clean-blog.min.js"></script>
-
+<footer>
+  <p><span data-i18n="foot">Made in Germany with Claude · MIT licence ·</span> <a href="https://github.com/michaelwartmann">GitHub</a></p>
+</footer>
+</main>
+<script>
+const T={
+de:{skip:"Zu den Apps",sub:"Sonnenblumen-Welt",intro:"Kleine Apps, kostenlos für alle. Öffnen, auf den Startbildschirm legen, loslegen.",p1:"Keine Werbung",p2:"Keine Konten",p3:"Kein Tracking",p4:"Kostenlos",appsH:"Apps",open:"Öffnen",offline:"Funktioniert offline",
+yoga:"Eine Yogapraxis, die zu dir passt, angeleitet auf dem Handy.",step:"Ein Weg zum Mandarin, von der Sprach-App bis zur HSK-Prüfung, mit freien Übungen und einem Anki-Deck.",sudoku:"Sudoku lösen wie ein Mensch, erklärt von einem freundlichen schwäbischen Lehrer.",aletheia:"Eine kleine Bildsprache dafür, wie wir Freundschaft, Trauer, Freude erleben – gestalte deine eigene und vergleiche.",
+installH:"So kommt eine App auf den Startbildschirm",a1:"App öffnen.",a2:"Oben rechts auf das Menü ⋮ tippen.",a3:"„App installieren“ oder „Zum Startbildschirm hinzufügen“ wählen.",i1:"App in Safari öffnen.",i2:"Unten auf Teilen □↑ tippen.",i3:"„Zum Home-Bildschirm“ wählen.",
+aboutH:"Über mich",ab1:"Hallo, ich bin Michael. Ich baue kleine Apps mit Claude: für Familie und Freunde, für die Vereine, mit denen ich arbeite, und für alle, die sie brauchen können.",ab2:"Ich bin Ingenieur, Tennistrainer und werdender Lehrer. Außerdem habe ich ein Buch geschrieben, <em>Aletheia</em>. Ich spreche Deutsch, Niederländisch und Englisch und lerne Schritt für Schritt Chinesisch.",ab3:"Alles hier ist kostenlos und quelloffen. Es kommt von uns, und es ist für uns.",foot:"Gemacht in Deutschland mit Claude · MIT-Lizenz ·"},
+zh:{skip:"跳到应用",sub:"向日葵世界",intro:"小应用，人人免费。打开，放到主屏幕，就能用。",p1:"无广告",p2:"无需账号",p3:"无追踪",p4:"免费",appsH:"应用",open:"打开",offline:"可离线使用",
+yoga:"为你量身定制的瑜伽练习，在手机上跟着做。",step:"从语言应用到 HSK 考试的中文学习之路，附免费练习和 Anki 卡组。",sudoku:"像人一样解数独，由一位亲切的施瓦本老师讲解（德语）。",aletheia:"一种小小的图像语言，描绘我们如何体验友谊、悲伤、喜悦——创作你自己的，再作比较。",
+installH:"如何把应用放到主屏幕",a1:"打开应用。",a2:"点右上角的菜单 ⋮。",a3:"选择“安装应用”或“添加到主屏幕”。",i1:"用 Safari 打开应用。",i2:"点底部的分享按钮 □↑。",i3:"选择“添加到主屏幕”。",
+aboutH:"关于我",ab1:"你好，我是 Michael（米夏）。我和 Claude 一起做小应用：给家人朋友，给我合作的俱乐部，也给所有用得上的人。",ab2:"我是工程师、网球教练，也在成为老师的路上。我还写过一本书，<em>Aletheia</em>。我会说德语、荷兰语和英语，正在一步一步学中文。",ab3:"这里的一切都免费、开源。来自我们，也属于我们。",foot:"在德国与 Claude 一起制作 · MIT 许可 ·"}};
+const EN={};document.querySelectorAll("[data-i18n]").forEach(e=>EN[e.dataset.i18n]=e.innerHTML);T.en=EN;
+function setLang(l){const d=T[l]||EN;document.documentElement.lang=l==="zh"?"zh-Hans":l;
+document.querySelectorAll("[data-i18n]").forEach(e=>{const k=e.dataset.i18n;if(d[k])e.innerHTML=d[k]});
+document.querySelectorAll(".langs button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.lang===l));
+try{localStorage.setItem("lang",l)}catch(e){}}
+document.querySelectorAll(".langs button").forEach(b=>b.onclick=()=>setLang(b.dataset.lang));
+let s=null;try{s=localStorage.getItem("lang")}catch(e){}
+const n=(navigator.language||"en").slice(0,2);setLang(s||(n==="de"?"de":n==="zh"?"zh":"en"));
+if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js");
+</script>
 </body>
-
 </html>
