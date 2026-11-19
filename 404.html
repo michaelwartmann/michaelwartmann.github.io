@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex"><title>向日葵.世界</title>
+<script>
+// Old gift links (michaelwartmann.github.io/<repo>/...) moved to Vercel in Nov 2026.
+// Send people straight on to the new address, keeping the rest of the path.
+(function () {
+  var moved = {
+    astronaut: "gift-astronaut", mayur_bday: "gift-mayur-bday", maiabday: "gift-maiabday",
+    papa: "gift-papa", heike: "gift-heike", werner: "gift-werner", omahilde: "gift-omahilde",
+    "falafel-for-kim": "gift-falafel-for-kim", alina: "gift-alina", mallika: "gift-mallika",
+    sebastian: "gift-sebastian", rick: "gift-rick"
+  };
+  var parts = location.pathname.split("/");
+  var to = moved[decodeURIComponent(parts[1] || "")];
+  if (to) {
+    location.replace("https://" + to + "-mikeio.vercel.app/" + parts.slice(2).join("/") + location.search + location.hash);
+  }
+})();
+</script>
+<style>body{margin:0;background:#fef3e0;color:#2b2416;font:17px/1.55 system-ui,-apple-system,sans-serif;display:flex;min-height:100vh;align-items:center;justify-content:center;text-align:center}a{color:#8a5a00}</style>
+</head><body><main><p style="font-size:2.5rem;margin:0">🌻</p><p>Diese Seite gibt es nicht (mehr). · This page doesn't exist (any more).</p><p><a href="/">向日葵.世界</a></p></main></body></html>
