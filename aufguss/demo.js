@@ -189,6 +189,23 @@
           },
         };
       }
+      case "recorded": {
+        // Real arm motion from a filmed clip (pose tracking), one cycle, looped. Both hands hold the towel together.
+        const D = demo.data, N = D.wR.length;
+        const at = (key, ph) => { const f = ph * N, i = Math.floor(f) % N, j = (i + 1) % N, u = f - Math.floor(f); return lerp(D[key][i], D[key][j], u); };
+        // centre of the hand circle; the towel corner sits a bit outside the hands (wrist rotation + grip), so we enlarge its circle
+        const mean = [0, 1, 2].map((c) => D.wR.reduce((a, p, i) => a + (p[c] + D.wL[i][c]) / 2, 0) / N);
+        const gain = demo.gain || 2.2;
+        return {
+          grip: "corner",
+          hands(t, w) {
+            const ph = ((w * t / TAU) % 1 + 1) % 1;
+            const wR = at("wR", ph), wL = at("wL", ph);
+            const m = lerp(wR, wL, 0.5), grip = add(mean, mul(sub(m, mean), gain));
+            return { R: [grip[0], Math.max(grip[1], m[1]), grip[2]], L: null, armR: [at("sR", ph), at("eR", ph), wR], armL: [at("sL", ph), at("eL", ph), wL] };
+          },
+        };
+      }
       case "fan": default: {
         return {
           grip: "fan",
@@ -362,9 +379,9 @@
       limb([v(0.12, 0.02, 0), v(0.12, 0.5, 0), v(0.1, 0.95, 0)], 0.09 * s);
       limb([v(-0.12, 0.02, 0), v(-0.12, 0.5, 0), v(-0.1, 0.95, 0)], 0.09 * s);
       limb([v(0, 0.95, 0), v(0, 1.45, 0)], 0.2 * s);
-      limb([SHOULDER_L, SHOULDER_R], 0.09 * s);
-      limb(this.arm(SHOULDER_R, h.R), 0.075 * s);
-      limb(this.arm(SHOULDER_L, h.L || (h.sameTowel ? null : null)), 0.075 * s);
+      limb(h.armR ? [h.armL[0], h.armR[0]] : [SHOULDER_L, SHOULDER_R], 0.09 * s);
+      limb(h.armR || this.arm(SHOULDER_R, h.R), 0.075 * s);
+      limb(h.armL || this.arm(SHOULDER_L, h.L), 0.075 * s);
       const head = this.project(v(0, 1.68, 0));
       items.push({ z: head[2], draw: () => { ctx.fillStyle = C.body; ctx.beginPath(); ctx.arc(head[0], head[1], 0.11 * s, 0, TAU); ctx.fill(); } });
       // fan
