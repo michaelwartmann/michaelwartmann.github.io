@@ -1461,7 +1461,7 @@ window.AUFGUSS_TECHNIQUES = [
     "tool": "towel",
     "hands": 2,
     "towels": 1,
-    "air": 2,
+    "air": 3,
     "heat": 2,
     "show": 1,
     "phase": [
@@ -1477,8 +1477,8 @@ window.AUFGUSS_TECHNIQUES = [
       "Spaccalegna"
     ],
     "desc": {
-      "en": "A basic, traditional move: the towel comes down like an axe splitting wood, from above the head down in front of you.",
-      "de": "Eine traditionelle Grundbewegung: Das Tuch kommt herunter wie eine Axt beim Holzspalten, von über dem Kopf nach unten vor den Körper."
+      "en": "Open towel held by both top corners in front at the hips. Swing it up past the face and over the head until the hands are behind the neck and the towel hangs down the back, then up again and chop it down to the front like an axe. Keep it off your body. Moves a lot of air (tutorial: difficulty +, air ++++).",
+      "de": "Offenes Tuch an beiden oberen Ecken vor der Hüfte halten. Am Gesicht vorbei über den Kopf schwingen, bis die Hände hinter dem Nacken sind und das Tuch den Rücken hinunterhängt, dann wieder hoch und wie eine Axt nach vorne unten schlagen. Das Tuch berührt den Körper nicht. Bewegt sehr viel Luft (Tutorial: Schwierigkeit +, Luft ++++)."
     },
     "use": {
       "en": "Pushes heat down towards the guests; simple and strong.",
@@ -1488,16 +1488,117 @@ window.AUFGUSS_TECHNIQUES = [
       "Wood chopping"
     ],
     "demo": {
-      "kind": "whip",
-      "speed": 0.8,
-      "twoHands": true
+      "kind": "keys",
+      "grip": "spread",
+      "speed": 0.5,
+      "source": "Aufguss.it 22 Lumberjack, watched and keyframed by hand",
+      "keys": [
+        [
+          0,
+          [
+            0.25,
+            1.0,
+            0.35
+          ],
+          [
+            -0.25,
+            1.0,
+            0.35
+          ]
+        ],
+        [
+          0.18,
+          [
+            0.25,
+            1.5,
+            0.3
+          ],
+          [
+            -0.25,
+            1.5,
+            0.3
+          ]
+        ],
+        [
+          0.32,
+          [
+            0.22,
+            1.98,
+            0.02
+          ],
+          [
+            -0.22,
+            1.98,
+            0.02
+          ]
+        ],
+        [
+          0.46,
+          [
+            0.2,
+            1.72,
+            -0.2
+          ],
+          [
+            -0.2,
+            1.72,
+            -0.2
+          ]
+        ],
+        [
+          0.56,
+          [
+            0.22,
+            1.98,
+            0.02
+          ],
+          [
+            -0.22,
+            1.98,
+            0.02
+          ]
+        ],
+        [
+          0.72,
+          [
+            0.25,
+            1.4,
+            0.55
+          ],
+          [
+            -0.25,
+            1.4,
+            0.55
+          ]
+        ],
+        [
+          0.84,
+          [
+            0.25,
+            1.02,
+            0.45
+          ],
+          [
+            -0.25,
+            1.02,
+            0.45
+          ]
+        ]
+      ]
     },
     "videos": [
       {
         "url": "https://www.youtube.com/watch?v=6dSv-wg8PXs",
         "title": "Aufguss.it 22 – Lumberjack"
       }
-    ]
+    ],
+    "clip": {
+      "id": "6dSv-wg8PXs",
+      "start": 38.4,
+      "end": 40.8,
+      "credit": "Aufguss.it",
+      "check": true
+    }
   },
   {
     "no": 12,
@@ -1872,8 +1973,8 @@ window.AUFGUSS_TECHNIQUES = [
       "Schiaffo"
     ],
     "desc": {
-      "en": "An advanced, showy move: the towel slaps sharply, like a whip. Avoid it in classic infusions. (Exact hand path to verify.)",
-      "de": "Eine fortgeschrittene, showreiche Bewegung: Das Tuch schlägt scharf wie eine Peitsche. Im klassischen Aufguss vermeiden. (Genaue Handführung noch prüfen.)"
+      "en": "Hold the towel like the oblique flag, hands apart on the same edge. Lift it over the head and slap it down across the front, so it cracks flat towards the guests; let it swing back and repeat (about one slap per second).",
+      "de": "Das Tuch wie bei der schrägen Fahne halten, die Hände auseinander an derselben Kante. Über den Kopf heben und vorne quer nach unten schlagen, sodass es flach zu den Gästen knallt; zurückschwingen lassen und wiederholen (etwa ein Schlag pro Sekunde)."
     },
     "use": {
       "en": "Accents and heat pushes.",
@@ -1884,15 +1985,91 @@ window.AUFGUSS_TECHNIQUES = [
       "Tennis smash"
     ],
     "demo": {
-      "kind": "whip",
-      "speed": 1.2
+      "kind": "keys",
+      "grip": "vertical",
+      "speed": 1.0,
+      "source": "Aufguss.it 26 Slaps, watched and keyframed by hand",
+      "keys": [
+        [
+          0.0,
+          [
+            -0.3,
+            1.75,
+            0.25
+          ],
+          [
+            -0.12,
+            1.15,
+            0.25
+          ]
+        ],
+        [
+          0.28,
+          [
+            0.08,
+            2.0,
+            0.05
+          ],
+          [
+            -0.02,
+            1.6,
+            0.12
+          ]
+        ],
+        [
+          0.42,
+          [
+            0.38,
+            1.45,
+            0.5
+          ],
+          [
+            0.18,
+            1.05,
+            0.42
+          ]
+        ],
+        [
+          0.6,
+          [
+            0.15,
+            1.3,
+            0.4
+          ],
+          [
+            0.02,
+            0.95,
+            0.32
+          ]
+        ],
+        [
+          0.8,
+          [
+            -0.2,
+            1.5,
+            0.3
+          ],
+          [
+            -0.12,
+            1.0,
+            0.28
+          ]
+        ]
+      ]
     },
     "videos": [
       {
         "url": "https://www.youtube.com/watch?v=RTUyyz0JPLE",
         "title": "Aufguss.it 26 – Slaps"
       }
-    ]
+    ],
+    "clip": {
+      "id": "RTUyyz0JPLE",
+      "start": 34.0,
+      "end": 36.0,
+      "credit": "Aufguss.it",
+      "check": true
+    }
   },
   {
     "no": 21,
@@ -2129,12 +2306,12 @@ window.AUFGUSS_TECHNIQUES = [
   {
     "no": 27,
     "id": "super-eight",
-    "code": "X1·2T",
+    "code": "X1·XL",
     "level": 3,
     "family": "eight",
     "tool": "towel",
     "hands": 2,
-    "towels": 2,
+    "towels": 1,
     "air": 3,
     "heat": 2,
     "show": 3,
@@ -2151,8 +2328,8 @@ window.AUFGUSS_TECHNIQUES = [
       "Super Otto"
     ],
     "desc": {
-      "en": "Two slightly smaller towels, each held about three quarters along. Both hands draw a figure eight, one hand half a turn behind the other: a double figure eight.",
-      "de": "Zwei etwas kleinere Tücher, jeweils bei etwa drei Vierteln gehalten. Beide Hände zeichnen eine Acht, eine Hand eine halbe Drehung hinter der anderen: eine doppelte Acht."
+      "en": "Aufguss.it version: a big towel held at one end, swung in a huge sideways figure eight. One loop on each side of the body: up across the front past the head, down on the outside. Elsewhere 'Super eight' also means two smaller towels in figure eights, one hand half a turn behind. To decide: which one we call Super 8.",
+      "de": "Version von Aufguss.it: ein großes Tuch an einem Ende gehalten und in einer riesigen liegenden Acht geschwungen. Je eine Schleife auf jeder Körperseite: vorne am Kopf vorbei nach oben, außen nach unten. Anderswo heißt „Super-Acht“ auch: zwei kleinere Tücher in Achten, eine Hand eine halbe Drehung hinterher. Zu entscheiden: was wir Super 8 nennen."
     },
     "use": {
       "en": "Show highlight with lots of air.",
@@ -2163,16 +2340,135 @@ window.AUFGUSS_TECHNIQUES = [
       "Double nunchaku"
     ],
     "demo": {
-      "kind": "eight",
-      "speed": 1.1,
-      "twoTowels": true
+      "kind": "keys",
+      "grip": "corner",
+      "big": true,
+      "speed": 0.55,
+      "source": "Aufguss.it 9 Super 8, watched and keyframed by hand",
+      "keys": [
+        [
+          0.0,
+          [
+            0.05,
+            1.72,
+            0.44
+          ],
+          null
+        ],
+        [
+          0.0833,
+          [
+            0.26,
+            1.962,
+            0.385
+          ],
+          null
+        ],
+        [
+          0.1667,
+          [
+            0.414,
+            1.962,
+            0.275
+          ],
+          null
+        ],
+        [
+          0.25,
+          [
+            0.47,
+            1.72,
+            0.22
+          ],
+          null
+        ],
+        [
+          0.3333,
+          [
+            0.414,
+            1.478,
+            0.275
+          ],
+          null
+        ],
+        [
+          0.4167,
+          [
+            0.26,
+            1.478,
+            0.385
+          ],
+          null
+        ],
+        [
+          0.5,
+          [
+            0.05,
+            1.72,
+            0.44
+          ],
+          null
+        ],
+        [
+          0.5833,
+          [
+            -0.16,
+            1.962,
+            0.385
+          ],
+          null
+        ],
+        [
+          0.6667,
+          [
+            -0.314,
+            1.962,
+            0.275
+          ],
+          null
+        ],
+        [
+          0.75,
+          [
+            -0.37,
+            1.72,
+            0.22
+          ],
+          null
+        ],
+        [
+          0.8333,
+          [
+            -0.314,
+            1.478,
+            0.275
+          ],
+          null
+        ],
+        [
+          0.9167,
+          [
+            -0.16,
+            1.478,
+            0.385
+          ],
+          null
+        ]
+      ]
     },
     "videos": [
       {
         "url": "https://www.youtube.com/watch?v=Un7K5BZAVz8",
         "title": "Aufguss.it 9 – Super 8"
       }
-    ]
+    ],
+    "clip": {
+      "id": "Un7K5BZAVz8",
+      "start": 32.8,
+      "end": 35.2,
+      "credit": "Aufguss.it",
+      "check": true
+    }
   },
   {
     "no": 28,

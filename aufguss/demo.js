@@ -202,6 +202,22 @@
           },
         };
       }
+      case "keys": {
+        // Authored from watching tutorials: keyframes [phase 0–1, right hand xyz, left hand xyz or null],
+        // interpolated with a closed Catmull-Rom spline so the loop has no corners.
+        const K = demo.keys.slice().sort((p, q) => p[0] - q[0]), n = K.length;
+        const cr = (p0, p1, p2, p3, u) => p1.map((_, i) => 0.5 * ((2 * p1[i]) + (-p0[i] + p2[i]) * u + (2 * p0[i] - 5 * p1[i] + 4 * p2[i] - p3[i]) * u * u + (-p0[i] + 3 * p1[i] - 3 * p2[i] + p3[i]) * u * u * u));
+        const at = (ph, j) => {
+          let i = n - 1; for (let m = 0; m < n; m++) if (K[m][0] <= ph) i = m;
+          const k1 = K[i], k2 = K[(i + 1) % n], t1 = k1[0], t2 = k2[0] + (i + 1 >= n ? 1 : 0), p = ph < t1 ? ph + 1 : ph;
+          const u = (p - t1) / ((t2 - t1) || 1), g = (m) => K[((m % n) + n) % n][j];
+          return k1[j] ? cr(g(i - 1) || k1[j], k1[j], g(i + 1) || k1[j], g(i + 2) || k1[j], u) : null;
+        };
+        return {
+          grip: demo.grip || "spread",
+          hands(t, w) { const ph = ((w * t / TAU) % 1 + 1) % 1; return { R: at(ph, 1), L: at(ph, 2), sameTowel: demo.grip === "corner" && !!K[0][2] }; },
+        };
+      }
       case "recorded": {
         // Real arm motion from a filmed clip (pose tracking), one cycle, looped. Both hands hold the towel together.
         const D = demo.data, N = D.wR.length;
