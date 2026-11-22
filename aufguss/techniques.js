@@ -1129,8 +1129,8 @@ window.AUFGUSS_TECHNIQUES = [
       "Bovenklap? (NL, to verify)"
     ],
     "desc": {
-      "en": "Arms together behind your body, thrust up and forward, open behind the head, then pull the towel down in a smooth arc. Don't let it touch your back.",
-      "de": "Arme hinter dem Körper zusammen, nach oben und vorn schwingen, hinter dem Kopf öffnen, dann das Tuch in einem weichen Bogen nach unten ziehen. Es soll den Rücken nicht berühren."
+      "en": "Towel spread above the head like a parachute, both hands on the top corners. Bring it down in one wide movement in front of you to your feet, then back up along the side to the top. The whole column of air from ceiling to floor moves (tutorial: difficulty +, air +++).",
+      "de": "Tuch über dem Kopf ausgebreitet wie ein Fallschirm, beide Hände an den oberen Ecken. In einer weiten Bewegung vor dir bis zu den Füßen bringen, dann seitlich wieder nach oben. Die ganze Luftsäule von der Decke bis zum Boden bewegt sich (Tutorial: Schwierigkeit +, Luft +++)."
     },
     "use": {
       "en": "Moves the largest volume of air, from top to bottom.",
@@ -1141,15 +1141,95 @@ window.AUFGUSS_TECHNIQUES = [
       "Rowing stroke"
     ],
     "demo": {
-      "kind": "shovel",
-      "speed": 0.8
+      "kind": "keys",
+      "grip": "spread",
+      "speed": 0.8,
+      "cloth": [
+        0.85,
+        0.6
+      ],
+      "source": "Aufguss.it 4 Parachute, watched and keyframed by hand",
+      "keys": [
+        [
+          0.0,
+          [
+            0.3,
+            2.0,
+            0.05
+          ],
+          [
+            -0.3,
+            2.0,
+            0.05
+          ]
+        ],
+        [
+          0.22,
+          [
+            0.28,
+            1.5,
+            0.5
+          ],
+          [
+            -0.28,
+            1.5,
+            0.5
+          ]
+        ],
+        [
+          0.4,
+          [
+            0.22,
+            0.92,
+            0.42
+          ],
+          [
+            -0.22,
+            0.92,
+            0.42
+          ]
+        ],
+        [
+          0.6,
+          [
+            0.45,
+            1.1,
+            0.2
+          ],
+          [
+            0.0,
+            1.05,
+            0.25
+          ]
+        ],
+        [
+          0.8,
+          [
+            0.4,
+            1.72,
+            0.0
+          ],
+          [
+            -0.05,
+            1.78,
+            0.05
+          ]
+        ]
+      ]
     },
     "videos": [
       {
         "url": "https://www.youtube.com/watch?v=uqz_wpzrpvA",
         "title": "Aufguss.it – Bovenklap (via Dutch sauna master association)"
       }
-    ]
+    ],
+    "clip": {
+      "id": "uqz_wpzrpvA",
+      "start": 37.8,
+      "end": 40.9,
+      "credit": "Aufguss.it",
+      "check": true
+    }
   },
   {
     "no": 4,
@@ -3155,16 +3235,96 @@ window.AUFGUSS_TECHNIQUES = [
       "de": "Öffnen & Schließen (großes Tuch)"
     },
     "desc": {
-      "en": "Opening and closing the big towel in one flowing movement. A complex move, mainly for modern/classic or show infusions.",
-      "de": "Das große Tuch in einer fließenden Bewegung öffnen und schließen. Eine komplexe Bewegung, vor allem für Modern-Classic- oder Show-Aufgüsse."
+      "en": "Big towel, both hands on one edge, beside the body. Open it up into a full vertical sheet, flip it flat like a tabletop, sweep it low and gather it again, then repeat. The big surface pushes a lot of air sideways along the benches.",
+      "de": "Großes Tuch, beide Hände an einer Kante, neben dem Körper. Zu einer vollen senkrechten Fläche öffnen, flach wie eine Tischplatte kippen, tief durchziehen und wieder sammeln, dann wiederholen. Die große Fläche schiebt viel Luft seitlich an den Bänken entlang."
     },
     "use": {
       "en": "Moves a lot of air with elegance.",
       "de": "Bewegt viel Luft mit Eleganz."
     },
     "demo": {
-      "kind": "wave",
-      "speed": 0.7
+      "kind": "keys",
+      "grip": "spread",
+      "speed": 0.8,
+      "cloth": [
+        0.72,
+        1.0
+      ],
+      "source": "Aufguss.it 51 Open&Close big towel, watched and keyframed by hand",
+      "keys": [
+        [
+          0.0,
+          [
+            0.05,
+            1.25,
+            0.25
+          ],
+          [
+            -0.5,
+            1.2,
+            0.25
+          ]
+        ],
+        [
+          0.2,
+          [
+            0.1,
+            1.85,
+            0.15
+          ],
+          [
+            -0.58,
+            1.75,
+            0.1
+          ]
+        ],
+        [
+          0.38,
+          [
+            0.12,
+            1.7,
+            0.6
+          ],
+          [
+            -0.55,
+            1.6,
+            0.55
+          ]
+        ],
+        [
+          0.6,
+          [
+            0.05,
+            1.15,
+            0.5
+          ],
+          [
+            -0.58,
+            1.1,
+            0.4
+          ]
+        ],
+        [
+          0.82,
+          [
+            0.0,
+            1.2,
+            0.3
+          ],
+          [
+            -0.48,
+            1.15,
+            0.28
+          ]
+        ]
+      ]
+    },
+    "clip": {
+      "id": "rDgSMBsU1sg",
+      "start": 44.8,
+      "end": 46.8,
+      "credit": "Aufguss.it",
+      "check": true
     }
   },
   {
