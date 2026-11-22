@@ -25,9 +25,9 @@
     const hipN = off(hip, 7 * w), hipF = off(hip, -7 * w);
     const neck = step(sh, p.h, SEG.neck);
     const head = step(sh, p.h, SEG.neck + HR);
-    const arm = (s, a) => { const e = step(s, a[0], SEG.upper); return [s, e, step(e, a[1], SEG.fore)]; };
+    const arm = (s, a, L) => { const e = step(s, a[0], L ? L[0] : SEG.upper); return [s, e, step(e, a[1], L ? L[1] : SEG.fore)]; }; // L: drawn lengths (foreshortened arms)
     const leg = (h, l) => { const k = step(h, l[0], SEG.thigh); const an = step(k, l[1], SEG.shin); return [h, k, an, step(an, l[2], SEG.foot)]; };
-    const J = { hip, sh, neck, head, hAng: p.h, armN: arm(shN, p.aN), armF: arm(shF, p.aF), legN: leg(hipN, p.lN), legF: leg(hipF, p.lF), bend: p.bend, t: p.t, w };
+    const J = { hip, sh, neck, head, hAng: p.h, armN: arm(shN, p.aN, p.LN), armF: arm(shF, p.aF, p.LF), legN: leg(hipN, p.lN), legF: leg(hipF, p.lF), bend: p.bend, t: p.t, w };
     // spine curve control point (positive bend bulges the front of the body)
     const mid = { x: (hip.x + sh.x) / 2, y: (hip.y + sh.y) / 2 };
     J.spineC = step(mid, p.t - 90, p.bend);

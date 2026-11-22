@@ -140,13 +140,20 @@
         };
       }
       case "comb": {
+        // Comb, as in the Aufguss.it tutorial: both hands hold the top corners, gather the towel at the chest,
+        // then snap apart so it bursts open and throws a puff of air. Alternates low (bottom benches)
+        // and high, flung up over the head (top benches).
         return {
           grip: "spread",
           hands(t, w) {
-            const f = (w * t / TAU) % 1;
-            const up = f < 0.35 ? smooth(f / 0.35) : 1 - smooth((f - 0.35) / 0.65);
-            const y = 0.95 + 0.85 * up, z = 0.35;
-            return { R: v(0.25, y, z), L: v(-0.25, y, z) };
+            const cyc = w * t / TAU, f = ((cyc % 1) + 1) % 1, high = Math.floor(cyc) % 2 === 1;
+            let open, lift;
+            if (f < 0.22) { open = smooth(f / 0.22); lift = open; }            // snap apart
+            else if (f < 0.5) { open = 1; lift = 1 - (high ? 0.15 : 0.3) * smooth((f - 0.22) / 0.28); } // hold, let it fly
+            else { open = 1 - smooth((f - 0.5) / 0.5); lift = 0.7 * (1 - smooth((f - 0.5) / 0.5)); } // gather again
+            const half = 0.06 + 0.3 * open;
+            const y = high ? 1.45 + 0.55 * lift : 1.15 + 0.2 * lift, z = 0.25 + (high ? -0.12 : 0.2) * lift; // high: the towel flies up and back over the head
+            return { R: v(half, y, z), L: v(-half, y, z) };
           },
         };
       }
@@ -376,14 +383,20 @@
       if (this.back.width !== Math.round(W * dpr)) { this.back.width = Math.round(W * dpr); this.back.height = Math.round(H * dpr); this.bctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
       const U = ENGINE_U, pitch = 0.32, cp = Math.cos(pitch), sp = Math.sin(pitch);
       const M = (p) => ({ x: p[0] * U, y: 50 + ((p[1] - SHOULDER_R[1]) * cp - p[2] * sp) * U });
-      const a = E.SEG.upper, b = E.SEG.fore, deg = (r) => r * 180 / Math.PI;
-      const ik = (S, T, side) => { // side +1 = right arm: elbow goes outwards (to +x) and down
-        let dx = T.x - S.x, dy = T.y - S.y, d = Math.hypot(dx, dy);
-        const dm = a + b - 0.5; if (d > dm) { dx *= dm / d; dy *= dm / d; d = dm; } if (d < 4) d = 4;
-        const th = Math.atan2(dy, dx), al = Math.acos(Math.max(-1, Math.min(1, (a * a + d * d - b * b) / (2 * a * d))));
-        const cand = [th + al, th - al].map((u) => ({ u, ex: S.x + Math.cos(u) * a, ey: S.y + Math.sin(u) * a }));
-        const e = cand.sort((p, q) => (side * q.ex - q.ey * 0.3) - (side * p.ex - p.ey * 0.3))[0];
-        return [deg(e.u), deg(Math.atan2(S.y + dy - e.ey, S.x + dx - e.ex))];
+      const deg = (r) => r * 180 / Math.PI;
+      // 3D arm: the elbow sits on the circle allowed by the two segments, as close as possible to a natural "pole"
+      // (elbows hang down when the hands are low, open outwards when they are high). Then everything is projected,
+      // and the engine draws the projected (foreshortened) segment lengths.
+      const A3 = 0.3, B3 = 0.28;
+      const ik = (S2, Sw, T, side) => {
+        let d = sub(T, Sw), l = len(d); const lm = A3 + B3 - 0.004; if (l > lm) { d = mul(d, lm / l); l = lm; } if (l < 0.05) { d = v(0, -0.05, 0.02); l = len(d); }
+        const dir = mul(d, 1 / l), x = (A3 * A3 - B3 * B3 + l * l) / (2 * l), r = Math.sqrt(Math.max(0, A3 * A3 - x * x));
+        const u = Math.max(0, Math.min(1, (T[1] - Sw[1]) / 0.3 + 0.3));
+        const pole = add(mul(v(side * 0.35, -1, -0.3), 1 - u), mul(v(side, -0.25, -0.2), u));
+        let pp = sub(pole, mul(dir, pole[0] * dir[0] + pole[1] * dir[1] + pole[2] * dir[2])), pl = len(pp) || 1;
+        const Ew = add(add(Sw, mul(dir, x)), mul(pp, r / pl)), Tw = add(Sw, d);
+        const e2 = M(Ew), t2 = M(Tw), s2 = M(Sw), ex = S2.x + e2.x - s2.x, ey = S2.y + e2.y - s2.y, tx = S2.x + t2.x - s2.x, ty = S2.y + t2.y - s2.y;
+        return { a: [deg(Math.atan2(ey - S2.y, ex - S2.x)), deg(Math.atan2(ty - ey, tx - ex))], L: [Math.hypot(ex - S2.x, ey - S2.y), Math.hypot(tx - ex, ty - ey)] };
       };
       const handR = h.R || REST_R, handL = h.L || (h.sameTowel ? add(h.R, v(-0.1, -0.02, 0)) : (h.armR ? add(h.R, v(-0.08, -0.03, 0)) : REST_L));
       // the body leans a little into the swing (weight over the side where the hands are), knees soften
@@ -392,7 +405,8 @@
       const tAng = 90 - 6 * this.lean, perp = (tAng - 90) * Math.PI / 180, shc = { x: Math.cos(tAng * Math.PI / 180) * 50, y: Math.sin(tAng * Math.PI / 180) * 50 };
       const SN = { x: shc.x + Math.cos(perp) * 12, y: shc.y + Math.sin(perp) * 12 }, SF = { x: shc.x - Math.cos(perp) * 12, y: shc.y - Math.sin(perp) * 12 };
       const kn = 4 * Math.abs(this.lean);
-      const pose = { view: "front", t: tAng, aN: ik(SN, M(handR), 1), aF: ik(SF, M(handL), -1), lN: [-90 + 3 * this.lean - kn, -90 + kn, 0], lF: [-90 + 3 * this.lean + kn, -90 - kn, 180] };
+      const iN = ik(SN, SHOULDER_R, handR, 1), iF = ik(SF, SHOULDER_L, handL, -1);
+      const pose = { view: "front", t: tAng, aN: iN.a, aF: iF.a, LN: iN.L, LF: iF.L, lN: [-90 + 3 * this.lean - kn, -90 + kn, 0], lF: [-90 + 3 * this.lean + kn, -90 - kn, 180] };
       // keep the body still: cancel the engine's re-centring, which depends on where the arms are
       const J = E.compute(pose, { head: E.STYLES.cat.head }), HR = E.STYLES.cat.head;
       const xs = [J.hip, J.sh, ...J.armN, ...J.armF, ...J.legN, ...J.legF].map((p) => p.x).concat([J.head.x - HR, J.head.x + HR]);
