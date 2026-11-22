@@ -1,7 +1,7 @@
 // Aufguss Studio – app: settings → composer (the grammar of an Aufguss) → timeline; technique library with demos.
 (function () {
   "use strict";
-  const { TECHNIQUES, OPTIONS, SCENTS, STYLES, RULES, GRAMMAR } = window.AUFGUSS_DATA;
+  const { TECHNIQUES, OPTIONS, SCENTS, STYLES, RULES, GRAMMAR, EXTRAS } = window.AUFGUSS_DATA;
   const byId = Object.fromEntries(TECHNIQUES.map((t) => [t.id, t]));
 
   // ---------- Text ----------
@@ -9,7 +9,7 @@
     en: {
       tagline: "Design your sauna infusion, round by round.",
       tabDesign: "Design", tabTech: "Techniques", tabAbout: "About",
-      setup: "Your infusion", minutes: "Length", min: "min", temp: "Sauna temperature", volume: "Room volume",
+      setup: "Your infusion", minutes: "Length", min: "min", temp: "Sauna temperature", seats: "Guests who fit", clearance: "Heads on the top bench to the ceiling", clTight: "under 20 cm", clNormal: "20–40 cm", clRoomy: "more than 40 cm", reach: "Farthest guest from the oven", rNear: "under 2 m", rMid: "2–4 m", rFar: "more than 4 m", extras: "Extras", estimate: "estimate", watchTop: "Watch the top bench: if people bend forward, ease off.", tightTxt: "Heads are close to the ceiling, in the hottest layer: a little less water, spread fast.", farTxt: "Far guests: the steam needs longer, keep distributing towards the back rows.", extraTxt: "Hand out: ",
       level: "Your level", lv1: "Beginner", lv2: "Intermediate", lv3: "Advanced",
       style: "Style", rounds: "Rounds", auto: "auto", theme: "Theme (optional)", themePh: "e.g. Forest morning, Ice palace",
       opening: "Opening", pour: "How you pour", scents: "Scents (one per round)", between: "Airing between rounds",
@@ -57,7 +57,7 @@
     de: {
       tagline: "Gestalte deinen Saunaaufguss, Runde für Runde.",
       tabDesign: "Gestalten", tabTech: "Techniken", tabAbout: "Über",
-      setup: "Dein Aufguss", minutes: "Dauer", min: "Min.", temp: "Saunatemperatur", volume: "Raumvolumen",
+      setup: "Dein Aufguss", minutes: "Dauer", min: "Min.", temp: "Saunatemperatur", seats: "Gäste, die Platz haben", clearance: "Köpfe auf der oberen Bank bis zur Decke", clTight: "unter 20 cm", clNormal: "20–40 cm", clRoomy: "mehr als 40 cm", reach: "Fernster Gast vom Ofen", rNear: "unter 2 m", rMid: "2–4 m", rFar: "mehr als 4 m", extras: "Extras", estimate: "geschätzt", watchTop: "Die obere Bank beobachten: Wenn sich Leute nach vorn beugen, zurücknehmen.", tightTxt: "Die Köpfe sind nah an der Decke, in der heißesten Schicht: etwas weniger Wasser, schnell verteilen.", farTxt: "Ferne Gäste: Der Dampf braucht länger, weiter zu den hinteren Reihen verteilen.", extraTxt: "Reichen: ",
       level: "Dein Level", lv1: "Einsteiger", lv2: "Fortgeschritten", lv3: "Profi",
       style: "Stil", rounds: "Runden", auto: "auto", theme: "Thema (optional)", themePh: "z. B. Waldmorgen, Eispalast",
       opening: "Eröffnung", pour: "Wie du aufgießt", scents: "Düfte (einer pro Runde)", between: "Lüften zwischen den Runden",
@@ -114,7 +114,7 @@
   const beginnerSet = TECHNIQUES.filter((t) => t.level === 1 && t.status === "described").map((t) => t.id);
   let mine = new Set(store.get("mine", []));
   let settings = Object.assign({
-    minutes: 10, temp: 90, volume: 30, level: 1, style: "classic", rounds: 0, theme: "",
+    minutes: 10, temp: 90, seats: 20, clearance: "normal", reach: "mid", extras: "none", level: 1, style: "classic", rounds: 0, theme: "",
     opening: "none", pour: "ice", scents: ["eucalyptus", "lemon", "mint", "pine"], airingAvail: "door", between: "none",
     music: false, closing: "thanks",
   }, store.get("settings", {}));
@@ -147,7 +147,9 @@
     let roundTime = (S.minutes - intro - opening - closing - (airAt >= 0 ? airTime : 0) - finaleAb) / rounds;
     if (roundTime < 1.2) { roundTime = 1.2; }
 
-    const totalWater = RULES.waterPerM3 * S.volume;
+    const volume = RULES.volumeFromSeats(S.seats || 20);
+    const totalWater = RULES.waterPerM3 * volume * (RULES.clearanceFactor[S.clearance] || 1);
+    const reachF = RULES.reachFactor[S.reach] || 1;
     const weights = rounds === 2 ? [0.4, 0.6] : rounds === 3 ? [0.25, 0.35, 0.4] : [0.2, 0.25, 0.25, 0.3];
 
     const used = new Set();
@@ -183,14 +185,19 @@
       for (let i = 0; i < nTech; i++) {
         steps.push({ kind: "tech", label: t("distTxt"), ...pick(last ? "peak" : "distribute", {
           maxLevel: lvl, maxShow: last ? 1 : showCap,
-          score: (x) => last ? x.heat * 3 + x.air : (heatStage < 0.5 ? x.show * 2 + x.level : x.air * 2 + x.heat) + (x.status === "described" ? 1 : 0),
+          score: (x) => (last ? x.heat * 3 + x.air : (heatStage < 0.5 ? x.show * 2 + x.level : x.air * 2 + x.heat) + (x.status === "described" ? 1 : 0)) + (reachF > 1 ? x.air : 0),
         }) });
       }
+      if (S.reach === "far" && r === 0) steps.push({ kind: "note", text: t("farTxt") });
+      if (S.clearance === "tight" && r === 0) steps.push({ kind: "note", text: t("tightTxt") });
+      if (last || heatStage >= 0.99) steps.push({ kind: "note", text: t("watchTop") });
       if (!last) steps.push({ kind: "abShort", text: t("abShort") });
       if (style.music) steps.push({ kind: "music", text: T[lang].musicTxt[heatStage < 0.34 ? 0 : heatStage < 0.99 ? 1 : 2] });
       const title = last ? t("phFinale") : t("phRound") + " " + (r + 1);
       push({ type: "round", dur: roundTime, title, steps, heat: heatStage, scentId });
-      if (r === airAt) push({ type: "airing", dur: airTime, title: t("phAiring"), text: T[lang].airTxt[airing] });
+      const extra = S.extras && S.extras !== "none" ? t("extraTxt") + nm(EXTRAS.find((e) => e.id === S.extras)) : "";
+      if (r === airAt) push({ type: "airing", dur: airTime, title: t("phAiring"), text: T[lang].airTxt[airing] + (extra ? " " + extra + "." : "") });
+      else if (extra && airAt < 0 && r === rounds - 2) phases[phases.length - 1].steps.push({ kind: "note", text: extra + "." });
     }
     push({ type: "abFinal", dur: finaleAb, title: "Abschlagen", text: t("abFinal"),
       steps: [{ kind: "tech", label: "", ...pick("abschlag", { maxLevel: 3, maxShow: 3, score: (x) => x.heat * 2 + (x.id === "abschlagen" ? 5 : 0) }) }] });
@@ -200,7 +207,7 @@
     if (S.minutes > max) warnings.push(fmt(t("warnTooLong"), { temp: S.temp, max }));
     if (!mine.size) warnings.push(t("warnNoTech"));
     if (S.pour === "water") warnings.push(t("warnWater"));
-    return { phases, total: clock, rounds, totalWater, warnings };
+    return { phases, total: clock, rounds, totalWater, volume, warnings };
   }
 
   // ---------- Rendering ----------
@@ -225,8 +232,8 @@
         <input type="range" min="6" max="15" step="1" value="${S.minutes}" data-k="minutes" aria-label="${t("minutes")}">
         <label class="row"><span>${t("temp")}</span><output>${S.temp} °C</output></label>
         <input type="range" min="70" max="105" step="5" value="${S.temp}" data-k="temp" aria-label="${t("temp")}">
-        <label class="row"><span>${t("volume")}</span><output>${S.volume} m³</output></label>
-        <input type="range" min="8" max="120" step="2" value="${S.volume}" data-k="volume" aria-label="${t("volume")}">
+        <label class="row"><span>${t("seats")}</span><output>${S.seats} · ≈ ${RULES.volumeFromSeats(S.seats)} m³ (${t("estimate")})</output></label>
+        <input type="range" min="2" max="80" step="1" value="${S.seats}" data-k="seats" aria-label="${t("seats")}">
         <div class="grid2">
           <label>${t("level")}<select data-k="level">${[1, 2, 3].map((l) => `<option value="${l}" ${S.level == l ? "selected" : ""}>${t("lv" + l)}</option>`).join("")}</select></label>
           <label>${t("style")}<select data-k="style">${opt(STYLES, S.style)}</select></label>
@@ -239,6 +246,9 @@
             <option value="draft" ${S.airingAvail === "draft" ? "selected" : ""}>${t("airDraft")}</option></select></label>
           <label>${t("between")}<select data-k="between" ${S.airingAvail === "none" ? "disabled" : ""}>${opt(OPTIONS.between.filter((o) => S.airingAvail === "draft" || o.id !== "draft"), S.between)}</select></label>
           <label>${t("closing")}<select data-k="closing">${opt(OPTIONS.closing, S.closing)}</select></label>
+          <label>${t("clearance")}<select data-k="clearance">${["tight", "normal", "roomy"].map((c) => `<option value="${c}" ${S.clearance === c ? "selected" : ""}>${t("cl" + c[0].toUpperCase() + c.slice(1))}</option>`).join("")}</select></label>
+          <label>${t("reach")}<select data-k="reach">${["near", "mid", "far"].map((c) => `<option value="${c}" ${S.reach === c ? "selected" : ""}>${t("r" + c[0].toUpperCase() + c.slice(1))}</option>`).join("")}</select></label>
+          <label>${t("extras")}<select data-k="extras">${opt(EXTRAS, S.extras)}</select></label>
         </div>
         <fieldset class="scents"><legend>${t("scents")}</legend>${Array.from({ length: rounds }, (_, i) => scentSel(i)).join("")}</fieldset>
         <label>${t("theme")}<input type="text" data-k="theme" value="${esc(S.theme)}" placeholder="${esc(t("themePh"))}"></label>
@@ -258,7 +268,7 @@
         ${step.label ? `<span class="lbl">${esc(step.label)}</span>` : ""}</div>`;
     };
     el.innerHTML = `
-      <h2>${t("plan")} <small>${t("total")} ${mmss(plan.total)} · ${t("water")} ≈ ${Math.round(plan.totalWater / 100) / 10} l</small></h2>
+      <h2>${t("plan")} <small>${t("total")} ${mmss(plan.total)} · ${t("water")} ≈ ${(Math.round(plan.totalWater / 100) / 10).toLocaleString(lang)} l</small></h2>
       ${plan.warnings.map((w) => `<p class="warn">${esc(w)}</p>`).join("")}
       <p class="hint">${t("tapTech")}</p>
       <ol class="timeline">${plan.phases.map((p, pi) => `
@@ -266,7 +276,7 @@
           <div class="when">${mmss(p.start)}</div>
           <div class="body"><h3>${esc(p.title)} <small>${mmss(p.dur)}</small></h3>
             ${p.text ? `<p>${esc(p.text)}</p>` : ""}
-            ${(p.steps || []).map((s, si) => s.kind === "tech" ? chip(s, pi, si) : `<p>${esc(s.text)}</p>`).join("")}
+            ${(p.steps || []).map((s, si) => s.kind === "tech" ? chip(s, pi, si) : `<p class="k-${s.kind}">${esc(s.text)}</p>`).join("")}
           </div></li>`).join("")}
       </ol>`;
   }
@@ -329,7 +339,7 @@
     const k = e.target.dataset.k;
     if (k && e.target.type === "range") {
       settings[k] = parseFloat(e.target.value);
-      e.target.previousElementSibling.querySelector("output").textContent = settings[k] + (k === "minutes" ? " " + t("min") : k === "temp" ? " °C" : " m³");
+      e.target.previousElementSibling.querySelector("output").textContent = k === "seats" ? `${settings[k]} · ≈ ${RULES.volumeFromSeats(settings[k])} m³ (${t("estimate")})` : settings[k] + (k === "minutes" ? " " + t("min") : " °C");
       store.set("settings", settings); renderPlan();
     }
   });
@@ -338,6 +348,7 @@
     if (el.dataset.k && el.type !== "range") {
       const k = el.dataset.k;
       settings[k] = ["level", "rounds"].includes(k) ? parseInt(el.value, 10) : el.value;
+      if (settings.seats === undefined) settings.seats = 20;
       store.set("settings", settings);
       if (["rounds", "airingAvail", "style"].includes(k)) renderDesign(); else renderPlan();
     } else if (el.dataset.scent !== undefined) {

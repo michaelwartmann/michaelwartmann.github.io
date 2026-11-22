@@ -42,6 +42,20 @@
     { id: "rose", en: "Rose", de: "Rose" }, { id: "vanilla", en: "Vanilla", de: "Vanille" },
   ];
 
+  // Extras handed to guests or used for a special moment (from real Aufguss plans); mostly for special/show infusions.
+  const EXTRAS = [
+    { id: "none", en: "No extras", de: "Keine Extras" },
+    { id: "ice-breathe", en: "Ice to hold under the nose", de: "Eis zum Atmen vor die Nase" },
+    { id: "frozen-fruit", en: "Frozen fruit", de: "Gefrorene Früchte" },
+    { id: "ice-lolly", en: "Ice lollies", de: "Wassereis" },
+    { id: "honey", en: "Honey for the skin", de: "Honig für die Haut" },
+    { id: "salt", en: "Salt peeling", de: "Salzpeeling" },
+    { id: "coffee", en: "Coffee peeling", de: "Kaffeepeeling" },
+    { id: "cream", en: "Body cream", de: "Körpercreme" },
+    { id: "ginger", en: "Ginger shot", de: "Ingwer-Shot" },
+    { id: "fire-ice", en: "Ice ball with a flame (show; check house rules)", de: "Eiskugel mit Flamme (Show; Hausregeln prüfen)" },
+  ];
+
   const STYLES = [
     { id: "classic", en: "Classic", de: "Klassisch", music: false, show: 1, maxLevel: 1 },
     { id: "standard", en: "Standard (with music)", de: "Standard (mit Musik)", music: true, show: 1, maxLevel: 2 },
@@ -52,7 +66,10 @@
 
   // Rules with sources, shown in the app as "why".
   const RULES = {
-    waterPerM3: 30, // ml per m³ room volume per Aufguss (DGUV / Sauna-Bund guideline); 30–60 g/m³ cited by some
+    waterPerM3: 30, // max. g water per m³ room per Aufguss (DGfdB R 26.30.04 / DGUV); some say 20–30
+    volumeFromSeats(seats) { return Math.round(4 + 1.5 * seats); }, // rough estimate: small home cabin ≈ 2 m³ per seat, big public saunas less
+    clearanceFactor: { tight: 0.8, normal: 1, roomy: 1 }, // heads close to the ceiling sit in the hottest layer
+    reachFactor: { near: 0.85, mid: 1, far: 1.25 },        // far guests: steam needs longer, distribute longer
     introMax: 90,   // seconds, Aufguss WM Modern Classic Cup
     maxMinutes(temp) { // guideline: 6–10 min, at most 12, at 90 °C or more; championships 12–15
       if (temp >= 95) return 10;
@@ -80,13 +97,17 @@
       de: "Finale: das richtige Abschlagen für jeden Gast, wenn es am heißesten ist." },
     { no: "G8", en: "Closing: thanks, door open, cool-down tips (fresh air, cold shower, rest, drink).",
       de: "Abschluss: Dank, Tür auf, Tipps zum Abkühlen (frische Luft, kalt duschen, ruhen, trinken)." },
-    { no: "G9", en: "Water: about 30 ml per m³ of room per infusion (guideline), more in later rounds.",
-      de: "Wasser: etwa 30 ml pro m³ Raum pro Aufguss (Richtwert), in späteren Runden mehr." },
-    { no: "G10", en: "Length depends on temperature: guideline 6–10 min, at most 12, at 90 °C or more; championships 12–15 min. Below 90 °C up to 15 min (our assumption, to verify).",
-      de: "Die Dauer hängt von der Temperatur ab: Richtwert 6–10 Min., höchstens 12, bei 90 °C und mehr; bei Meisterschaften 12–15 Min. Unter 90 °C bis 15 Min. (unsere Annahme, noch prüfen)." },
-    { no: "G11", en: "Scent in the ice ball, pure water for pouring. Scent in the water is less elegant: every round smells the same.",
-      de: "Duft in die Eiskugel, reines Wasser zum Aufgießen. Duft im Wasser ist weniger elegant: Jede Runde riecht gleich." },
+    { no: "G9", en: "Water and room. Guideline: at most 30 g water per m³ of room per infusion (DGfdB / DGUV), more in later rounds. Nobody can see m³, so the app asks what you can see: how many guests fit, how close the heads on the top bench are to the ceiling, and how far the farthest guest is from the oven. 1 litre of water makes about 1.7 m³ of steam: it rises above the oven like a mushroom, spreads under the ceiling, then sinks onto the benches. A good sauna master sees where it is and when it arrives.",
+      de: "Wasser und Raum. Richtwert: höchstens 30 g Wasser pro m³ Raum pro Aufguss (DGfdB / DGUV), in späteren Runden mehr. Kubikmeter sieht niemand, also fragt die App, was man sieht: wie viele Gäste Platz haben, wie nah die Köpfe auf der oberen Bank an der Decke sind und wie weit der fernste Gast vom Ofen sitzt. 1 Liter Wasser ergibt etwa 1,7 m³ Dampf: Er steigt über dem Ofen wie ein Pilz auf, breitet sich unter der Decke aus und sinkt dann auf die Bänke. Ein guter Aufgussmeister sieht, wo er ist und wann er ankommt." },
+    { no: "G10", en: "Stamina (circulation): the body can only lose heat by sweating, so heat builds up over the whole infusion. Heart rate rises by about 40 beats per minute in 10 minutes, and humidity adds to it on top of temperature. That's why length depends on temperature: guideline 6–10 min, at most 12, at 90 °C or more; championships 12–15 min. Below 90 °C up to 15 min (our assumption, to verify).",
+      de: "Ausdauer (Kreislauf): Der Körper kann Wärme nur durch Schwitzen loswerden, also staut sich die Hitze über den ganzen Aufguss. Der Puls steigt in 10 Minuten um etwa 40 Schläge pro Minute, und die Luftfeuchte kommt zur Temperatur noch dazu. Darum hängt die Dauer von der Temperatur ab: Richtwert 6–10 Min., höchstens 12, bei 90 °C und mehr; bei Meisterschaften 12–15 Min. Unter 90 °C bis 15 Min. (unsere Annahme, noch prüfen)." },
+    { no: "G11", en: "Scent in the ice ball, pure water for pouring. Scent in the water is less elegant: every round smells the same. For special show infusions you can get fancy, e.g. an ice ball with a core you can light (check house rules and safety).",
+      de: "Duft in die Eiskugel, reines Wasser zum Aufgießen. Duft im Wasser ist weniger elegant: Jede Runde riecht gleich. Für besondere Show-Aufgüsse geht es verspielter, z. B. eine Eiskugel mit einem Kern, den man anzünden kann (Hausregeln und Sicherheit prüfen)." },
+    { no: "G12", en: "Peak heat (skin): a different limit from stamina. Steam condenses on the skin and burns; skin temperature already sits near the heat-pain threshold. Guests who aren't used to it hit their limit first. Watch the top bench: first people bend forward, then they leave. Bending forward means ease off.",
+      de: "Spitzenhitze (Haut): eine andere Grenze als die Ausdauer. Dampf kondensiert auf der Haut und brennt; die Hauttemperatur liegt ohnehin nahe der Hitze-Schmerzschwelle. Ungeübte Gäste erreichen ihre Grenze zuerst. Die obere Bank beobachten: Erst beugen sich die Leute nach vorn, dann gehen sie. Nach vorn beugen heißt: zurücknehmen." },
+    { no: "G13", en: "Magic moments (special and show infusions only): extras for guests such as ice to breathe through, frozen fruit, ice lollies, honey, salt or coffee peeling, a ginger shot; lighting, smoke and props. Small surprises, placed where the story needs them, often in the airing break.",
+      de: "Magische Momente (nur für besondere und Show-Aufgüsse): Extras für Gäste wie Eis zum Atmen, gefrorene Früchte, Wassereis, Honig, Salz- oder Kaffeepeeling, ein Ingwer-Shot; Licht, Rauch und Requisiten. Kleine Überraschungen, dort platziert, wo die Geschichte sie braucht, oft in der Lüftungspause." },
   ];
 
-  root.AUFGUSS_DATA = { TECHNIQUES, OPTIONS, SCENTS, STYLES, RULES, GRAMMAR };
+  root.AUFGUSS_DATA = { TECHNIQUES, OPTIONS, SCENTS, STYLES, RULES, GRAMMAR, EXTRAS };
 })(typeof window !== "undefined" ? window : globalThis);
