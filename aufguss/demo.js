@@ -215,7 +215,14 @@
         };
         return {
           grip: demo.grip || "spread",
-          hands(t, w) { const ph = ((w * t / TAU) % 1 + 1) % 1; return { R: at(ph, 1), L: at(ph, 2), sameTowel: demo.grip === "corner" && !!K[0][2] }; },
+          hands(t, w) {
+            const ph = ((w * t / TAU) % 1 + 1) % 1, R = at(ph, 1), L = at(ph, 2), out = { R, L, sameTowel: demo.grip === "corner" && !!K[0][2] };
+            if (demo.spin) { // the whole body turns: hands are authored in the body frame and rotated about the vertical axis
+              const th = TAU * demo.spin * ph, c = Math.cos(th), sn = Math.sin(th), rot = (p) => p && v(p[0] * c + p[2] * sn, p[1], -p[0] * sn + p[2] * c);
+              Object.assign(out, { R: rot(R), L: rot(L), Rl: R, Ll: L, yaw: th });
+            }
+            return out;
+          },
         };
       }
       case "recorded": {
@@ -270,7 +277,7 @@
         else if (grip === "center") cloth = new Cloth(9, 9, 0.7, 0.7);
         else if (grip === "vertical") cloth = new Cloth(7, 8, 0.75 * (d.big ? 1.3 : 1), 1.0);
         else if (grip === "fan") cloth = null;
-        else cloth = new Cloth(8, 6, 0.75, 0.5); // open towel, top edge held
+        else cloth = new Cloth(8, 6, d.cloth ? d.cloth[0] : 0.75, d.cloth ? d.cloth[1] : 0.5); // open towel, top edge held
         this.cloths.push(cloth);
       }
       this.thrown = false; this.throwTimer = 0;
@@ -341,7 +348,7 @@
           }
           this.lastCatch = h.R;
         }
-        if (!h.armR) h = Object.assign({}, h, { R: this.clear(reach(SHOULDER_R, h.R)), L: this.clear(reach(SHOULDER_L, h.L)) });
+        if (!h.armR && h.yaw == null) h = Object.assign({}, h, { R: this.clear(reach(SHOULDER_R, h.R)), L: this.clear(reach(SHOULDER_L, h.L)) });
         this.hands = h;
         this.cloths.forEach((cl, n) => {
           if (!cl) return;
@@ -414,7 +421,7 @@
         const e2 = M(Ew), t2 = M(Tw), s2 = M(Sw), ex = S2.x + e2.x - s2.x, ey = S2.y + e2.y - s2.y, tx = S2.x + t2.x - s2.x, ty = S2.y + t2.y - s2.y;
         return { a: [deg(Math.atan2(ey - S2.y, ex - S2.x)), deg(Math.atan2(ty - ey, tx - ex))], L: [Math.hypot(ex - S2.x, ey - S2.y), Math.hypot(tx - ex, ty - ey)] };
       };
-      const handR = h.R || REST_R, handL = h.L || (h.sameTowel ? add(h.R, v(-0.1, -0.02, 0)) : (h.armR ? add(h.R, v(-0.08, -0.03, 0)) : REST_L));
+      const handR = h.Rl || h.R || REST_R, handL = h.Ll || h.L || (h.sameTowel ? add(h.R, v(-0.1, -0.02, 0)) : (h.armR ? add(h.R, v(-0.08, -0.03, 0)) : REST_L));
       // the body leans a little into the swing (weight over the side where the hands are), knees soften
       const side = Math.max(-1, Math.min(1, ((handR[0] + handL[0]) / 2) / 0.35));
       this.lean = (this.lean ?? 0) * 0.85 + side * 0.15;
@@ -428,7 +435,9 @@
       const xs = [J.hip, J.sh, ...J.armN, ...J.armF, ...J.legN, ...J.legF].map((p) => p.x).concat([J.head.x - HR, J.head.x + HR]);
       const cx = E.VB.w / 2 - (Math.min(...xs) + Math.max(...xs)) / 2, dyF = J.hip.y; // compute() lifted everything by dyF
       const cx0 = E.VB.w / 2;
-      this.svgEl.innerHTML = `<g transform="translate(${(cx0 - cx).toFixed(2)} 0)">${E.svgInner(pose, { style: "cat", animal: this.figure })}</g>`;
+      // turning body (twirls): squash and mirror the width by cos(yaw), the old paper-cut trick
+      const sx = h.yaw == null ? 1 : (Math.cos(h.yaw) >= 0 ? 1 : -1) * (0.45 + 0.55 * Math.abs(Math.cos(h.yaw)));
+      this.svgEl.innerHTML = `<g transform="translate(${cx0} 0) scale(${sx.toFixed(3)} 1) translate(${-cx0} 0)"><g transform="translate(${(cx0 - cx).toFixed(2)} 0)">${E.svgInner(pose, { style: "cat", animal: this.figure })}</g></g>`;
       const VX = -30, VY = -50, VW = 320, VH = 280, k = Math.min(W / VW, H / VH), ox = (W - VW * k) / 2 - VX * k, oy = (H - VH * k) / 2 - VY * k;
       const P = (p) => { const m = M(p); return [ox + (m.x + cx0) * k, oy + (E.VB.floor - (m.y + dyF)) * k, p[2]]; };
       const front = this.ctx, back = this.bctx;

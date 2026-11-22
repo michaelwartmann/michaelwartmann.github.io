@@ -1926,8 +1926,8 @@ window.AUFGUSS_TECHNIQUES = [
     },
     "aka": [],
     "desc": {
-      "en": "The towel is folded and unfolded without a pause, in one fluid, elegant motion.",
-      "de": "Das Tuch wird ohne Pause gefaltet und entfaltet, in einer fließenden, eleganten Bewegung."
+      "en": "Hold two adjacent corners, hands about shoulder-width apart. Circle the towel up the side, let it spread flat above your head like a parachute, then pull it down the side so it unfolds into a full sheet. Keep it flowing without a pause (tutorial: difficulty ++, air ++).",
+      "de": "Zwei benachbarte Ecken halten, Hände etwa schulterbreit. Das Tuch seitlich nach oben kreisen, über dem Kopf flach wie einen Fallschirm aufgehen lassen, dann an der Seite nach unten ziehen, sodass es sich ganz entfaltet. Ohne Pause fließen lassen (Tutorial: Schwierigkeit ++, Luft ++)."
     },
     "use": {
       "en": "Mainly show and highlight infusions.",
@@ -1938,15 +1938,108 @@ window.AUFGUSS_TECHNIQUES = [
       "Ribbon snakes"
     ],
     "demo": {
-      "kind": "wave",
-      "speed": 0.7
+      "kind": "keys",
+      "grip": "spread",
+      "speed": 0.75,
+      "source": "Aufguss.it 7 Unfolding, watched and keyframed by hand",
+      "keys": [
+        [
+          0.0,
+          [
+            0.05,
+            1.1,
+            0.4
+          ],
+          [
+            -0.45,
+            1.08,
+            0.35
+          ]
+        ],
+        [
+          0.14,
+          [
+            0.2,
+            1.55,
+            0.32
+          ],
+          [
+            -0.25,
+            1.65,
+            0.25
+          ]
+        ],
+        [
+          0.3,
+          [
+            0.27,
+            2.0,
+            -0.05
+          ],
+          [
+            -0.22,
+            2.0,
+            -0.08
+          ]
+        ],
+        [
+          0.48,
+          [
+            0.22,
+            1.95,
+            0.1
+          ],
+          [
+            -0.25,
+            1.9,
+            0.08
+          ]
+        ],
+        [
+          0.66,
+          [
+            0.0,
+            1.6,
+            0.3
+          ],
+          [
+            -0.45,
+            1.35,
+            0.25
+          ]
+        ],
+        [
+          0.84,
+          [
+            -0.02,
+            1.2,
+            0.4
+          ],
+          [
+            -0.5,
+            1.1,
+            0.32
+          ]
+        ]
+      ],
+      "cloth": [
+        0.95,
+        0.75
+      ]
     },
     "videos": [
       {
         "url": "https://www.youtube.com/watch?v=r2BRLXQRSu4",
         "title": "Aufguss.it 7 – Unfolding"
       }
-    ]
+    ],
+    "clip": {
+      "id": "r2BRLXQRSu4",
+      "start": 44.0,
+      "end": 46.6,
+      "credit": "Aufguss.it",
+      "check": true
+    }
   },
   {
     "no": 20,
@@ -2868,17 +2961,58 @@ window.AUFGUSS_TECHNIQUES = [
       "de": "Twirl-Engel"
     },
     "desc": {
-      "en": "Combination of the two advanced techniques Angel and Twirl (pirouette).",
-      "de": "Kombination der zwei fortgeschrittenen Techniken Engel und Pirouette."
+      "en": "Hold two adjacent corners at your side: one hand at the chest, the other arm stretched out like a wing. Turn your whole body once around (a twirl) and keep the towel open, so it flies flat around you. Spot like a dancer so you don't get dizzy (tutorial: difficulty ++, air ++).",
+      "de": "Zwei benachbarte Ecken an der Seite halten: eine Hand an der Brust, der andere Arm ausgestreckt wie ein Flügel. Den ganzen Körper einmal herumdrehen (Twirl) und das Tuch offen halten, sodass es flach um dich fliegt. Mit dem Blick einen Punkt fixieren wie beim Tanzen, damit dir nicht schwindlig wird (Tutorial: Schwierigkeit ++, Luft ++)."
     },
     "use": {
       "en": "Very showy; for show infusions only.",
       "de": "Sehr showreich; nur für Show-Aufgüsse."
     },
     "demo": {
-      "kind": "sweep",
-      "speed": 0.9,
-      "twoTowels": true
+      "kind": "keys",
+      "grip": "spread",
+      "speed": 0.6,
+      "spin": 1,
+      "cloth": [
+        0.85,
+        0.6
+      ],
+      "source": "Aufguss.it 15 Twirl Angel, watched and keyframed by hand",
+      "keys": [
+        [
+          0.0,
+          [
+            0.55,
+            1.5,
+            0.1
+          ],
+          [
+            0.05,
+            1.38,
+            0.25
+          ]
+        ],
+        [
+          0.5,
+          [
+            0.56,
+            1.56,
+            0.05
+          ],
+          [
+            0.06,
+            1.42,
+            0.22
+          ]
+        ]
+      ]
+    },
+    "clip": {
+      "id": "_FGsVbxjGh8",
+      "start": 43.8,
+      "end": 46.0,
+      "credit": "Aufguss.it",
+      "check": true
     }
   },
   {
@@ -2912,16 +3046,84 @@ window.AUFGUSS_TECHNIQUES = [
       "de": "Twirl-Pizza"
     },
     "desc": {
-      "en": "Start with the twirl; when the turn is finished, the hand behind your back lets go of the towel and you go straight into the pizza.",
-      "de": "Mit der Pirouette beginnen; nach der Drehung lässt die Hand hinter dem Rücken das Tuch los, und du gehst direkt in die Pizza."
+      "en": "Start like the oblique flag at your side, two adjacent corners. Turn your whole body once around and let the towel spin flat around you at shoulder height like a pizza; finish facing the guests with the towel spread overhead, then let it drop in front.",
+      "de": "Wie die schräge Fahne an der Seite beginnen, zwei benachbarte Ecken. Den ganzen Körper einmal herumdrehen und das Tuch auf Schulterhöhe flach um dich kreisen lassen wie eine Pizza; zu den Gästen gewandt mit dem Tuch ausgebreitet über dem Kopf enden, dann vorne fallen lassen."
     },
     "use": {
       "en": "Show only.",
       "de": "Nur Show."
     },
     "demo": {
-      "kind": "flatspin",
-      "speed": 1.6
+      "kind": "keys",
+      "grip": "spread",
+      "speed": 0.5,
+      "spin": 1,
+      "cloth": [
+        0.85,
+        0.65
+      ],
+      "source": "Aufguss.it 17 Twirl Pizza, watched and keyframed by hand",
+      "keys": [
+        [
+          0.0,
+          [
+            0.45,
+            1.6,
+            0.1
+          ],
+          [
+            0.05,
+            1.45,
+            0.25
+          ]
+        ],
+        [
+          0.45,
+          [
+            0.5,
+            1.82,
+            0.05
+          ],
+          [
+            0.1,
+            1.7,
+            0.2
+          ]
+        ],
+        [
+          0.78,
+          [
+            0.3,
+            2.0,
+            0.0
+          ],
+          [
+            -0.3,
+            2.0,
+            0.0
+          ]
+        ],
+        [
+          0.92,
+          [
+            0.42,
+            1.62,
+            0.12
+          ],
+          [
+            0.02,
+            1.47,
+            0.24
+          ]
+        ]
+      ]
+    },
+    "clip": {
+      "id": "n60EEXnAYhc",
+      "start": 30.0,
+      "end": 37.0,
+      "credit": "Aufguss.it",
+      "check": true
     }
   },
   {
