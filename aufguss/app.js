@@ -379,6 +379,7 @@
     const list = TECHNIQUES.filter((x) => libFilter === "all" || (libFilter === "mine" ? mine.has(x.id) : String(x.level) === libFilter));
     const dots = (n) => "●".repeat(n) + "○".repeat(3 - n);
     $("#library").innerHTML = `
+      <p style="margin:0 16px 8px"><a class="labbtn" href="lab.html">${lang === "de" ? "Wedel-Labor: Techniken in 3D ausprobieren" : "Towel lab: try techniques in 3D"}</a></p>
       <div class="filters" role="group">
         ${["all", "1", "2", "3", "mine"].map((f) => `<button data-filter="${f}" aria-pressed="${libFilter === f}">${f === "all" ? t("all") : f === "mine" ? t("mine") + " (" + mine.size + ")" : t("lv" + f)}</button>`).join("")}
       </div>
@@ -405,7 +406,8 @@
   const FIG = { bear: { en: "Bear", de: "Bär" }, cat: { en: "Cat", de: "Katze" }, panda: { en: "Panda", de: "Panda" }, fox: { en: "Fox", de: "Fuchs" },
     otter: { en: "Otter", de: "Otter" }, tiger: { en: "Tiger", de: "Tiger" }, koala: { en: "Koala", de: "Koala" }, stick: { en: "Stick figure", de: "Strichmännchen" } };
   function openTech(id) {
-    const x = byId[id]; if (!x) return;
+    const x0 = byId[id]; if (!x0) return;
+    const ov = store.get("lab.override", {})[id], x = ov ? Object.assign({}, x0, { demo: ov }) : x0;
     const dlg = $("#sheet");
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
     dlg.innerHTML = `<div class="sheet-in">
@@ -417,6 +419,8 @@
       <div class="controls"><button id="playBtn">${reduce ? t("play") : t("pause")}</button>
         <label>${t("tempo")} <input id="tempo" type="range" min="0.25" max="1.5" step="0.05" value="1"></label></div>
       <p class="hint">${t("tempoHint")}</p>
+      <p class="controls"><a class="labbtn" href="lab.html?t=${esc(id)}">${lang === "de" ? "Im Wedel-Labor ausprobieren (3D)" : "Try it in the towel lab (3D)"}</a>
+        ${ov ? `<button id="ovReset">${lang === "de" ? "Deine Labor-Version · zurücksetzen" : "Your lab version · reset"}</button>` : ""}</p>
       <p>${esc(nm(x.desc))}</p><p><em>${esc(nm(x.use))}</em></p>
       ${x.related && x.related.length ? `<p class="meta">${t("related")}: ${esc(x.related.join(", "))}</p>` : ""}
       ${x.aka && x.aka.length ? `<p class="meta">aka ${esc(x.aka.join(", "))}</p>` : ""}
@@ -428,6 +432,7 @@
     demo = new window.TechniqueDemo($("#demoCanvas"), x, { figure, colors: {
       body: cs.getPropertyValue("--ink").trim() || "#3b2a20", towel: "#f6f1e8", edge: cs.getPropertyValue("--wood").trim() || "#b98a5c", line: cs.getPropertyValue("--line").trim() || "#d9c7b3" } });
     if (!reduce) demo.play();
+    if (ov) $("#ovReset").onclick = () => { const all = store.get("lab.override", {}); delete all[id]; store.set("lab.override", all); closeTech(); openTech(id); };
     $("#playBtn").onclick = () => { if (demo.running) { demo.pause(); $("#playBtn").textContent = t("play"); } else { demo.play(); $("#playBtn").textContent = t("pause"); } };
     $("#tempo").oninput = (e) => demo.setTempo(parseFloat(e.target.value));
     $("#figSel").onchange = (e) => { figure = e.target.value; store.set("figure", figure); closeTech(); openTech(id); };

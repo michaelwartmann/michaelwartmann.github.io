@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Towel lab · Aufguss Studio</title>
+<meta name="description" content="Try waving techniques in 3D: move the arms, watch the towel and the air it pushes.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="theme-color" content="#b5763f">
+<style>
+  :root { --bg: #fbf6ef; --card: #fffdf9; --ink: #2f2119; --muted: #6e5a4c; --line: #e3d4c3; --wood: #b5763f; --accent: #7a3e1d; --cool: #3f6f80; --ember: #c0471f; --tap: 44px;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "PingFang SC", sans-serif; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #1d1612; --card: #271e18; --ink: #f3e9df; --muted: #c2ad9b; --line: #4a3a2e; --wood: #d39a62; --accent: #e8a477; --cool: #8cc3d4; --ember: #ff7a4d; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-size: 16px; line-height: 1.4; }
+  header { display: flex; align-items: center; gap: 10px; padding: 10px 14px 4px; }
+  header h1 { font-size: 1.25rem; margin: 0; flex: 1; }
+  header a { color: var(--accent); }
+  .wrap { display: grid; gap: 10px; padding: 0 12px 24px; }
+  @media (min-width: 900px) { .wrap { grid-template-columns: minmax(420px, 1.2fr) 1fr; align-items: start; } .side { max-height: calc(100vh - 70px); overflow: auto; } .stagebox { position: sticky; top: 8px; } }
+  .stagebox { background: var(--card); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+  #stage { display: block; width: 100%; height: min(62vh, 560px); touch-action: none; cursor: grab; background: radial-gradient(ellipse at 50% 35%, rgba(181,118,63,0.10), transparent 70%); }
+  .bar { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px; align-items: center; border-top: 1px solid var(--line); }
+  button, select { min-height: var(--tap); min-width: var(--tap); border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 999px; padding: 0 12px; font: inherit; font-size: .95rem; cursor: pointer; }
+  select { border-radius: 12px; max-width: 100%; }
+  button.primary { background: var(--wood); color: #fff; border: 0; font-weight: 700; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px; }
+  .card h2 { font-size: 1.02rem; margin: 0 0 8px; }
+  .row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+  .meters { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .meter b { display: block; font-size: 1.2rem; }
+  .meter small { color: var(--muted); }
+  .meter i { display: block; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; margin-top: 4px; }
+  .meter i span { display: block; height: 100%; width: 0; background: var(--ember); transition: width .2s; }
+  .sl { display: grid; gap: 2px; margin: 6px 0; font-size: .92rem; }
+  .sl span { display: flex; justify-content: space-between; gap: 8px; }
+  .sl output { color: var(--muted); font-variant-numeric: tabular-nums; }
+  input[type=range] { width: 100%; min-height: 32px; accent-color: var(--wood); }
+  .hint { color: var(--muted); font-size: .9rem; }
+  kbd { border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 0 5px; font-size: .85rem; background: var(--bg); }
+  #pad { position: relative; width: 150px; height: 150px; border-radius: 16px; border: 1px solid var(--line); background: var(--bg); touch-action: none; --x: 50%; --y: 50%; }
+  #pad::after { content: ""; position: absolute; left: var(--x); top: var(--y); width: 30px; height: 30px; margin: -15px; border-radius: 50%; background: var(--wood); }
+  .clipv { aspect-ratio: 16/9; width: 100%; border-radius: 10px; overflow: hidden; background: #000; }
+  #out { word-break: break-all; }
+  details summary { cursor: pointer; font-weight: 700; min-height: 32px; }
+  @media (prefers-reduced-motion: reduce) { .meter i span { transition: none; } }
+</style>
+</head>
+<body>
+<header>
+  <h1 data-en="Towel lab" data-de="Wedel-Labor">Towel lab</h1>
+  <a href="index.html" data-en="Back to the app" data-de="Zurück zur App">Back to the app</a>
+</header>
+<main class="wrap">
+  <section class="stagebox" aria-label="3D view">
+    <canvas id="stage" tabindex="0" aria-label="3D figure waving a towel. Drag to turn the view; keys move the hands."></canvas>
+    <div class="bar">
+      <button id="play" aria-label="Pause or play">⏸</button>
+      <label class="hint" for="slow" data-en="Slow motion" data-de="Zeitlupe">Slow motion</label>
+      <input id="slow" type="range" min="0.1" max="1" step="0.05" value="1" style="width:110px">
+      <button data-view="0,0.15" data-en="Front" data-de="Vorne">Front</button>
+      <button data-view="1.5708,0.12" data-en="Side" data-de="Seite">Side</button>
+      <button data-view="-0.6,1.25" data-en="Top" data-de="Oben">Top</button>
+      <button id="restart" data-en="Restart" data-de="Neu starten">Restart</button>
+    </div>
+    <div class="bar meters">
+      <div class="meter"><small data-en="Air moved, m³/s" data-de="Bewegte Luft, m³/s">Air moved, m³/s</small><b id="mAir">0</b><i><span id="bAir"></span></i></div>
+      <div class="meter"><small data-en="Towel open" data-de="Tuch offen">Towel open</small><b id="mOpen">0</b><i><span id="bOpen"></span></i></div>
+      <div class="meter"><small data-en="Hand speed, m/s" data-de="Handtempo, m/s">Hand speed, m/s</small><b id="mHand">0</b><i><span id="bHand"></span></i></div>
+    </div>
+  </section>
+
+  <div class="side" style="display:grid;gap:10px">
+    <section class="card">
+      <h2 data-en="Motion" data-de="Bewegung">Motion</h2>
+      <div class="row">
+        <select id="preset" aria-label="Motion"></select>
+      </div>
+      <div class="row" style="margin-top:6px">
+        <select id="grip" aria-label="Grip">
+          <option value="corner" data-en="One corner (folded towel)" data-de="Eine Ecke (gefaltetes Tuch)">One corner</option>
+          <option value="spread" data-en="Two top corners" data-de="Zwei obere Ecken">Two top corners</option>
+          <option value="edge" data-en="One edge, top and bottom (flag)" data-de="Eine Kante, oben und unten (Fahne)">One edge</option>
+        </select>
+        <select id="towel" aria-label="Towel">
+          <option value="strip" data-en="Folded strip 37×100" data-de="Gefaltet 37×100">Folded strip</option>
+          <option value="open" data-en="Open 100×70" data-de="Offen 100×70">Open</option>
+          <option value="square" data-en="Square 75×75" data-de="Quadrat 75×75">Square</option>
+          <option value="big" data-en="Big 150×100" data-de="Groß 150×100">Big</option>
+        </select>
+        <select id="lmode" aria-label="Left hand">
+          <option value="join" data-en="Left hand helps (same grip)" data-de="Linke Hand hilft (gleicher Griff)">Left helps</option>
+          <option value="mirror" data-en="Left hand mirrors" data-de="Linke Hand spiegelt">Left mirrors</option>
+          <option value="opposite" data-en="Left hand mirrors, half a loop later" data-de="Linke Hand spiegelt, halbe Schleife später">Opposite</option>
+          <option value="own" data-en="Left hand on its own" data-de="Linke Hand eigenständig">Own</option>
+          <option value="rest" data-en="Left hand rests" data-de="Linke Hand ruht">Rests</option>
+        </select>
+      </div>
+      <button id="simplify" hidden data-en="Make it adjustable (all sliders)" data-de="Einstellbar machen (alle Regler)">Make it adjustable</button>
+      <div id="sliders"></div>
+    </section>
+
+    <section class="card">
+      <h2 data-en="Steer live" data-de="Live steuern">Steer live</h2>
+      <p class="hint" data-en="The loop keeps running; you push the hands on top of it. Right hand: W A S D, Q/E forward/back. Left hand: I J K L, U/O. Arrow keys turn the view, space pauses. On the phone: drag in the pad." data-de="Die Schleife läuft weiter; du schiebst die Hände dazu. Rechte Hand: W A S D, Q/E vor/zurück. Linke Hand: I J K L, U/O. Pfeiltasten drehen die Ansicht, Leertaste pausiert. Am Handy: im Feld ziehen."></p>
+      <div class="row">
+        <div id="pad" role="application" aria-label="Move the right hand"></div>
+        <div style="display:grid;gap:6px">
+          <button id="bake" data-en="Keep this change" data-de="Änderung übernehmen">Keep this change</button>
+          <button id="zero" data-en="Undo live push" data-de="Live-Schub zurück">Undo live push</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 data-en="Compare with the tutorial" data-de="Mit dem Tutorial vergleichen">Compare with the tutorial</h2>
+      <div id="clipbox"></div>
+      <p class="hint" data-en="Slow both down, turn the model to the camera angle of the video, then nudge until they match." data-de="Beide verlangsamen, das Modell in den Kamerawinkel des Videos drehen, dann so lange schieben, bis es passt."></p>
+    </section>
+
+    <section class="card">
+      <h2 data-en="Explore" data-de="Erkunden">Explore</h2>
+      <p class="hint" data-en="The lab changes one thing at a time and keeps it if more air moves while the towel stays open and the hands stay calm." data-de="Das Labor ändert jeweils eine Sache und behält sie, wenn mehr Luft bewegt wird, das Tuch offen bleibt und die Hände ruhig bleiben."></p>
+      <div class="row"><button id="explore" class="primary" data-en="Explore" data-de="Erkunden">Explore</button>
+        <label><input type="checkbox" id="wild"> <span data-en="big jumps" data-de="große Sprünge">big jumps</span></label></div>
+      <p id="exinfo" class="hint" aria-live="polite"></p>
+    </section>
+
+    <section class="card">
+      <h2 data-en="Keep it" data-de="Behalten">Keep it</h2>
+      <div class="row"><button id="save" data-en="Save on this phone" data-de="Auf dem Handy speichern">Save</button><button id="export" data-en="Copy as keyframes" data-de="Als Keyframes kopieren">Copy</button></div>
+      <div class="row" style="margin-top:6px"><select id="toapp" aria-label="Technique"></select><button id="useapp" data-en="Use in the app" data-de="In der App nutzen">Use in the app</button></div>
+      <p id="out" class="hint" aria-live="polite"></p>
+      <details><summary data-en="View" data-de="Ansicht">View</summary>
+        <label><input type="checkbox" id="air" checked> <span data-en="Show the air the towel pushes" data-de="Luft zeigen, die das Tuch schiebt">Show air</span></label><br>
+        <label><input type="checkbox" id="trail" checked> <span data-en="Show the path of the right hand" data-de="Weg der rechten Hand zeigen">Show hand path</span></label>
+      </details>
+    </section>
+  </div>
+</main>
+<script src="techniques.js"></script>
+<script src="clip.js"></script>
+<script src="lab.js"></script>
+</body>
+</html>
