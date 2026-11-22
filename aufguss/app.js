@@ -120,6 +120,8 @@
   }, store.get("settings", {}));
   let plan = null;
   let libFilter = "all";
+  const PR = window.AufgussProfile;
+  let me = store.get("me", null); // { animal, level, heat, care, scent, answers }
 
   const t = (k) => T[lang][k];
   const nm = (o) => (o && (o[lang] || o.en)) || "";
@@ -153,10 +155,13 @@
     const weights = rounds === 2 ? [0.4, 0.6] : rounds === 3 ? [0.25, 0.35, 0.4] : [0.2, 0.25, 0.25, 0.3];
 
     const used = new Set();
+    const prof = me && PR ? PR.options(me) : null;
+    const fit = (x) => (prof && prof.fam.includes(x.family) ? 1.5 : 0);
+    const avoided = (x) => prof && prof.avoid.some((a) => x.code.startsWith(a) || x.code.includes(a));
     const pick = (phase, opts) => {
-      let c = TECHNIQUES.filter((x) => canDo.has(x.id) && x.phase.includes(phase) && x.level <= opts.maxLevel && x.show <= opts.maxShow && !opts.exclude?.includes(x.id));
+      let c = TECHNIQUES.filter((x) => canDo.has(x.id) && x.phase.includes(phase) && x.level <= opts.maxLevel && x.show <= opts.maxShow && !opts.exclude?.includes(x.id) && !avoided(x));
       if (!c.length) c = TECHNIQUES.filter((x) => beginnerSet.includes(x.id) && x.phase.includes(phase));
-      c.sort((a, b) => opts.score(b) - opts.score(a));
+      c.sort((a, b) => opts.score(b) + fit(b) - opts.score(a) - fit(a));
       const fresh = c.find((x) => !used.has(x.id)) || c[0];
       if (fresh) used.add(fresh.id);
       return { chosen: fresh ? fresh.id : null, candidates: c.map((x) => x.id) };
@@ -226,6 +231,7 @@
     const scentSel = (i) => `<select data-scent="${i}" aria-label="${t("scents")} ${i + 1}">${SCENTS.map((s) => `<option value="${s.id}" ${S.scents[i] === s.id ? "selected" : ""}>${esc(nm(s))}</option>`).join("")}</select>`;
     const rounds = S.rounds || (S.minutes >= 12 ? 4 : S.minutes >= 8 ? 3 : 2);
     $("#design").innerHTML = `
+      <section class="card" id="meCard" aria-live="polite"></section>
       <section class="card" aria-labelledby="setupH">
         <h2 id="setupH">${t("setup")}</h2>
         <label class="row"><span>${t("minutes")}</span><output>${S.minutes} ${t("min")}</output></label>
@@ -254,7 +260,95 @@
         <label>${t("theme")}<input type="text" data-k="theme" value="${esc(S.theme)}" placeholder="${esc(t("themePh"))}"></label>
       </section>
       <section id="planOut" aria-live="polite"></section>`;
+    renderMe();
     renderPlan();
+  }
+
+  // ---------- Profile: your sauna animal ----------
+  const L2 = (pair) => (lang === "de" ? pair[1] : pair[0]);
+  function portrait(animal, wave) {
+    const E = window.PoseEngine; if (!E) return "";
+    const pose = { view: "front", aN: wave ? [70, 110] : [-75, -95], aF: [-105, -85], lN: [-90, -90, 0], lF: [-90, -90, 180] };
+    try { return `<svg viewBox="-10 -20 300 250" aria-hidden="true">${E.svgInner(pose, { style: "cat", animal })}</svg>`; } catch (e) { return ""; }
+  }
+  function renderMe() {
+    const el = $("#meCard"); if (!el || !PR) return;
+    if (!me) {
+      el.innerHTML = `<div class="me">${portrait("fox", true)}<div><h2>${lang === "de" ? "Welches Sauna-Tier bist du?" : "Which sauna animal are you?"}</h2>
+        <p>${lang === "de" ? "Sieben kurze Fragen zu Hitze, Kraft, Rhythmus und Düften. Daraus wird dein Level und ein Aufguss, der zu dir passt." : "Seven short questions about heat, power, rhythm and scents. They set your level and an infusion that suits you."}</p>
+        <button class="primary" data-quiz>${lang === "de" ? "Finde es heraus (1 Minute)" : "Find out (1 minute)"}</button></div></div>`;
+      return;
+    }
+    const a = PR.ANIMAL[me.animal], nat = PR.NATURE[a.nature], h = PR.HEATS[me.heat - 1], o = PR.options(me);
+    el.innerHTML = `<div class="me">${portrait(me.animal, true)}<div>
+      <p class="code">${esc(PR.code(me, lang))}</p>
+      <p>${esc(lang === "de" ? nat.de : nat.en)} · ${esc(lang === "de" ? "Techniken bis" : "techniques up to")} ${t("lv" + o.level)} · ${esc(lang === "de" ? h.textDe : h.text)}</p></div></div>
+      <details><summary>${lang === "de" ? "Mehr zu dir" : "More about you"}</summary>
+        <p>${esc(lang === "de" ? nat.textDe : nat.text)}</p>
+        <p>${esc(L2(PR.SCENT_TXT[me.scent || 0]))}</p>
+        ${(me.care || []).map((c) => `<p class="warn">${esc(L2(PR.CARE_TXT[c]))}</p>`).join("")}
+        <p class="hint">${lang === "de" ? "Merk dir deinen Code: Er ist dein Profil. Kein Konto, nichts verlässt dein Handy." : "Remember your code: it is your profile. No account, nothing leaves your phone."}</p>
+        <p>${lang === "de" ? "Nach einem Aufguss:" : "After an infusion:"}</p>
+        <div class="controls"><button data-fb="easy">${lang === "de" ? "Techniken zu leicht" : "Techniques too easy"}</button>
+        <button data-fb="hard">${lang === "de" ? "zu schwer" : "too hard"}</button>
+        <button data-fb="much">${lang === "de" ? "Zu heiß für mich" : "Too hot for me"}</button></div>
+      </details>
+      <div class="controls"><button data-quiz>${lang === "de" ? "Neu testen" : "Take the test again"}</button></div>`;
+  }
+  let quizAnswers = {};
+  function openQuiz() {
+    quizAnswers = Object.assign({}, me && me.answers);
+    const dlg = $("#sheet");
+    dlg.innerHTML = `<div class="sheet-in quiz"><header><h2>${lang === "de" ? "Dein Sauna-Tier" : "Your sauna animal"}</h2><button class="x" data-close aria-label="${t("close")}">✕</button></header>
+      ${PR.QUESTIONS.map((q) => `<fieldset><legend>${esc(lang === "de" ? q.de : q.en)}</legend>
+        ${q.opts.map((o, i) => q.multi
+          ? `<label><input type="checkbox" name="q-${q.id}" value="${o[0]}" ${(quizAnswers[q.id] || []).includes(o[0]) ? "checked" : ""}> ${esc(lang === "de" ? o[2] : o[1])}</label>`
+          : `<label><input type="radio" name="q-${q.id}" value="${i}" ${quizAnswers[q.id] === i ? "checked" : ""}> ${esc(L2(o))}</label>`).join("")}
+      </fieldset>`).join("")}
+      <p class="hint" id="quizHint"></p>
+      <button class="primary" id="quizGo">${lang === "de" ? "Mein Tier zeigen" : "Show my animal"}</button></div>`;
+    dlg.showModal ? dlg.showModal() : dlg.setAttribute("open", "");
+    $("#quizGo").onclick = () => {
+      const a = {};
+      for (const q of PR.QUESTIONS) {
+        if (q.multi) a[q.id] = [...dlg.querySelectorAll(`input[name="q-${q.id}"]:checked`)].map((x) => x.value);
+        else { const c = dlg.querySelector(`input[name="q-${q.id}"]:checked`); if (!c) { $("#quizHint").textContent = (lang === "de" ? "Noch offen: " : "Still open: ") + (lang === "de" ? q.de : q.en); dlg.querySelector(`input[name="q-${q.id}"]`).focus(); return; } a[q.id] = +c.value; }
+      }
+      showResult(a);
+    };
+  }
+  function showResult(a, natIdx = 0) {
+    const r = PR.assess(a), natId = r.natures[natIdx], nat = PR.NATURE[natId];
+    let chosen = me && PR.ANIMAL[me.animal] && PR.ANIMAL[me.animal].nature === natId ? me.animal : nat.animals[0][0];
+    const st = () => ({ animal: chosen, level: r.level, heat: r.heat, care: r.care, scent: r.scent, answers: a });
+    const dlg = $("#sheet");
+    const draw = () => {
+      dlg.innerHTML = `<div class="sheet-in"><header><h2>${esc(PR.code(st(), lang))}</h2><button class="x" data-close aria-label="${t("close")}">✕</button></header>
+        <p><b>${esc(lang === "de" ? nat.de : nat.en)}.</b> ${esc(lang === "de" ? nat.textDe : nat.text)}</p>
+        <p>${lang === "de" ? "Wähle dein Tier:" : "Choose your animal:"}</p>
+        <div class="pickanimal" role="group">${nat.animals.map(([id, en, de]) => `<button data-animal="${id}" aria-pressed="${id === chosen}">${portrait(id, id === chosen)}<span>${esc(lang === "de" ? de : en)}</span></button>`).join("")}</div>
+        <p>${lang === "de" ? "Alter = dein Level" : "Age = your level"}: ${esc(lang === "de" ? PR.AGES[r.level - 1].de : PR.AGES[r.level - 1].en)} · ${lang === "de" ? "Hitze" : "Heat"}: ${esc(lang === "de" ? PR.HEATS[r.heat - 1].de : PR.HEATS[r.heat - 1].en)}</p>
+        ${r.care.map((c) => `<p class="warn">${esc(L2(PR.CARE_TXT[c]))}</p>`).join("")}
+        <div class="controls"><button class="primary" id="meSave">${lang === "de" ? "Das bin ich" : "That's me"}</button>
+          <button id="meOther">${lang === "de" ? "Passt nicht – nächste Natur" : "Doesn't fit – next nature"}</button></div></div>`;
+      dlg.querySelectorAll("[data-animal]").forEach((b) => (b.onclick = () => { chosen = b.dataset.animal; draw(); }));
+      $("#meOther").onclick = () => showResult(a, (natIdx + 1) % r.natures.length);
+      $("#meSave").onclick = () => { me = st(); store.set("me", me); applyProfile(); closeTech(); };
+    };
+    draw();
+  }
+  function applyProfile() {
+    const o = PR.options(me);
+    settings.level = o.level;
+    settings.minutes = Math.min(o.minutes, RULES.maxMinutes(settings.temp));
+    if (o.style) settings.style = o.style;
+    store.set("settings", settings);
+    if (PR.ANIMAL[me.animal]) { figure = me.animal; store.set("figure", figure); }
+    if (!mine.size) { // a first guess at what you can do; untick what you can't
+      TECHNIQUES.filter((x) => x.status === "described" && (x.level < o.level || (x.level === o.level && (o.fam.includes(x.family) || x.level === 1)))).forEach((x) => mine.add(x.id));
+      store.set("mine", [...mine]);
+    }
+    render();
   }
 
   function renderPlan(existing) {
@@ -319,7 +413,7 @@
       <p class="meta">${t("lv" + x.level)} · ${t("fam")[x.family]} · ${x.hands === 2 ? "2 ✋" : "1 ✋"}${x.towels === 2 ? " · 2 towels" : ""}${x.status === "named" ? " · " + t("toVerify") : ""}</p>
       ${x.clip ? `<button class="clipbtn" id="clipBtn">▶ ${lang === "de" ? "Clip ansehen" : "Watch clip"} · ${esc(x.clip.credit || "YouTube")}</button><div class="cliphost" id="clipHost"></div>` : ""}
       <canvas id="demoCanvas" role="img" aria-label="${esc(nm(x.name))}"></canvas>
-      <label class="figpick">${lang === "de" ? "Figur" : "Figure"} <select id="figSel">${["bear", "cat", "panda", "fox", "otter", "tiger", "koala", "penguin_x"].filter((f) => f === "cat" || (window.PoseEngine && window.PoseEngine.KITS[f])).concat(["stick"]).map((f) => `<option value="${f}" ${f === figure ? "selected" : ""}>${FIG[f] ? FIG[f][lang] : f}</option>`).join("")}</select></label>
+      <label class="figpick">${lang === "de" ? "Figur" : "Figure"} <select id="figSel">${(PR ? PR.ANIMALS.map((a) => a.id) : ["bear", "cat", "panda", "fox", "otter", "tiger", "koala"]).filter((f) => f === "cat" || (window.PoseEngine && window.PoseEngine.KITS[f])).concat(["stick"]).map((f) => `<option value="${f}" ${f === figure ? "selected" : ""}>${FIG[f] ? FIG[f][lang] : PR && PR.ANIMAL[f] ? PR.ANIMAL[f][lang] : f}</option>`).join("")}</select></label>
       <div class="controls"><button id="playBtn">${reduce ? t("play") : t("pause")}</button>
         <label>${t("tempo")} <input id="tempo" type="range" min="0.25" max="1.5" step="0.05" value="1"></label></div>
       <p class="hint">${t("tempoHint")}</p>
@@ -376,6 +470,8 @@
       document.querySelectorAll("main > section.view").forEach((s) => (s.hidden = s.id !== b.dataset.view));
     } else if (b.dataset.lang) { lang = b.dataset.lang; store.set("lang", lang); render(); }
     else if (b.dataset.open) openTech(b.dataset.open);
+    else if (b.dataset.quiz !== undefined) openQuiz();
+    else if (b.dataset.fb) { me = PR.next(me, { tech: b.dataset.fb, heat: b.dataset.fb }); store.set("me", me); applyProfile(); }
     else if (b.dataset.close !== undefined) closeTech();
     else if (b.dataset.filter) { libFilter = b.dataset.filter; renderLibrary(); }
     else if (b.dataset.swap) {

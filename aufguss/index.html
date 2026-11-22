@@ -65,6 +65,19 @@
   label.cando { display: flex; align-items: center; gap: 8px; color: var(--ink); min-height: var(--tap); margin: 0; }
   label.cando input { width: 24px; height: 24px; accent-color: var(--accent); }
   dialog#sheet { border: 0; padding: 0; width: min(680px, 100vw); max-height: 92vh; border-radius: 18px 18px 0 0; margin: auto auto 0; background: var(--card); color: var(--ink); }
+  button.primary { background: var(--wood); color: #fff; border: 0; border-radius: 12px; padding: 12px 16px; font-weight: 700; min-height: 44px; }
+  .me { display: grid; grid-template-columns: 96px 1fr; gap: 12px; align-items: center; }
+  .me svg { width: 96px; height: 84px; background: var(--bg); border-radius: 12px; }
+  .me .code { font-size: 1.15rem; font-weight: 700; }
+  .me p { margin: 4px 0; }
+  .quiz fieldset { border: 1px solid var(--line); border-radius: 12px; margin: 0 0 12px; padding: 10px 12px; }
+  .quiz legend { font-weight: 700; padding: 0 4px; }
+  .quiz label { display: flex; gap: 10px; align-items: center; min-height: 44px; }
+  .quiz input { width: 22px; height: 22px; flex: none; }
+  .pickanimal { display: flex; gap: 8px; flex-wrap: wrap; }
+  .pickanimal button { display: flex; flex-direction: column; align-items: center; padding: 6px; border-radius: 12px; border: 2px solid var(--line); background: var(--bg); color: var(--ink); min-width: 96px; }
+  .pickanimal button[aria-pressed="true"] { border-color: var(--wood); }
+  .pickanimal svg { width: 84px; height: 72px; }
   dialog::backdrop { background: rgba(20, 12, 8, .5); }
   .sheet-in { padding: 12px 16px 24px; }
   .sheet-in header { display: flex; justify-content: space-between; align-items: center; }
@@ -110,6 +123,7 @@
   <script src="pose-engine.js"></script>
   <script src="demo.js"></script>
   <script src="clip.js"></script>
+  <script src="profile.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
