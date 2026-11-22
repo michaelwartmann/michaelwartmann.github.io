@@ -54,16 +54,19 @@
       this.reset();
     }
     ix(i, j, k) { return i + this.SX * j + this.SXY * k; }
-    reset() { this.u.fill(0); this.v.fill(0); this.w.fill(0); this.T.set(this.base); this.W.fill(22); this.pour = 0; this.poured = 0; this.pending = 0; this.forces = []; this.t = 0; }
+    reset() { this.u.fill(0); this.v.fill(0); this.w.fill(0); this.T.set(this.base); this.W.fill(22); this.pour = 0; this.poured = 0; this.pending = 0; this.vap = 0; this.forces = []; this.t = 0; }
     pourWater(g) { this.pending += g; this.pour = 2.5; }
     scalarBnd(f) { for (const [id, nb] of this.border) { let s = 0; for (const q of nb) s += f[q]; f[id] = s / nb.length; } }
     velBnd() { const { u, v, w, solid, N } = this; for (let id = 0; id < N; id++) if (solid[id]) { u[id] = 0; v[id] = 0; w[id] = 0; } }
-    project(it = 14) {
+    project(it = this.ITER ?? 30) { // Gauss-Seidel with over-relaxation: converges far enough for room-wide currents
       const { u, v, w, p, dv, solid, fluid, SX, SXY } = this;
       for (const id of fluid) { dv[id] = -0.5 * (u[id + 1] - u[id - 1] + v[id + SX] - v[id - SX] + w[id + SXY] - w[id - SXY]); p[id] = 0; }
       for (let n = 0; n < it; n++) for (const id of fluid) {
         const pc = p[id];
-        p[id] = (dv[id] + (solid[id + 1] ? pc : p[id + 1]) + (solid[id - 1] ? pc : p[id - 1]) + (solid[id + SX] ? pc : p[id + SX]) + (solid[id - SX] ? pc : p[id - SX]) + (solid[id + SXY] ? pc : p[id + SXY]) + (solid[id - SXY] ? pc : p[id - SXY])) / 6;
+        let nb = 0, sum = 0;
+        if (!solid[id + 1]) { sum += p[id + 1]; nb++; } if (!solid[id - 1]) { sum += p[id - 1]; nb++; } if (!solid[id + SX]) { sum += p[id + SX]; nb++; }
+        if (!solid[id - SX]) { sum += p[id - SX]; nb++; } if (!solid[id + SXY]) { sum += p[id + SXY]; nb++; } if (!solid[id - SXY]) { sum += p[id - SXY]; nb++; }
+        if (nb) p[id] = pc + 1.7 * ((dv[id] + sum) / nb - pc);
       }
       for (const id of fluid) {
         const pc = p[id];
@@ -88,16 +91,22 @@
       let tm = 0; for (const id of fluid) tm += T[id]; tm /= fluid.length;
       const kw = this.plan.kw || 9, stoneT = 90 + kw * 12;
       const F = this.forces;
+      if (this.pour > 0 || this.pending > 1) this.sinceHiss = 0; else this.sinceHiss = (this.sinceHiss ?? 99) + dt;
+      const cj = (this.CJ ?? 8) * Math.exp(-(this.sinceHiss ?? 99) / 3);
       for (const id of fluid) {
-        v[id] += dt * 9.81 * 0.3 * ((T[id] - tm) / (tm + 273.15) + 0.38 * (W[id] - 22) / 1000 / 0.97);
+        v[id] += dt * 9.81 * (this.BUOY ?? 0.6) * ((T[id] - tm) / (tm + 273.15) + 0.38 * (W[id] - 22) / 1000 / 0.97);
         if (heat[id] & 1) T[id] += (stoneT - T[id]) * Math.min(1, dt * 1.2);
         T[id] += (this.base[id] - T[id]) * dt * 0.03;
-        W[id] += (22 - W[id]) * dt * 0.004; // slow exchange with fresh air
         if (F.length) {
           const k = Math.floor(id / SXY), r = id - k * SXY, j = Math.floor(r / SX), i = r - j * SX, x = this.x0 + (i - 0.5) * c, y = (j - 0.5) * c, z = this.z0 + (k - 0.5) * c;
           for (const f of F) { const dx = x - f.p[0], dy = y - f.p[1], dz = z - f.p[2], q = (dx * dx + dy * dy + dz * dz) / (f.r * f.r); if (q < 1) { const s = (1 - q) * dt * f.k; u[id] += f.d[0] * s; v[id] += f.d[1] * s; w[id] += f.d[2] * s; } }
         }
-        u[id] *= 1 - dt * 0.3; v[id] *= 1 - dt * 0.3; w[id] *= 1 - dt * 0.3;
+        // ceiling jet: the steam jet from the stones hits the ceiling and runs outwards along it (too thin for our grid,
+        // so it is added as a force on humid air in the top layer, strongest while the water is hissing, then fading)
+        if (cj > 0) { const k = Math.floor(id / SXY), r = id - k * SXY, j = Math.floor(r / SX), i = r - j * SX, y = (j - 0.5) * c;
+          if (y > this.H - 0.45 && W[id] > 30) { const x = this.x0 + (i - 0.5) * c - this.oven.x, z = this.z0 + (k - 0.5) * c - this.oven.z, rr = Math.hypot(x, z) || 1, f = cj * Math.min(1, (W[id] - 30) / 200) * dt;
+            u[id] += f * x / rr; w[id] += f * z / rr; } }
+        const dmp = 1 - dt * (this.DAMP ?? 0.12); u[id] *= dmp; v[id] *= dmp; w[id] *= dmp;
       }
       // steam from the stones: all of the water ends up in the air (g), at most saturated steam (~590 g/m³)
       if (this.pending > 0) {
@@ -105,8 +114,8 @@
         const cv = c * c * c, rate = Math.min(this.pending, (this.pour > 0 ? 250 : 120) * dt);
         let room_ = 0; for (const id of this.steamCells) room_ += Math.max(0, 590 - W[id]) * cv;
         const put = Math.min(rate, room_);
-        if (put > 0) for (const id of this.steamCells) { const share = Math.max(0, 590 - W[id]) * cv / room_; W[id] += put * share / cv; T[id] += (105 - T[id]) * dt * 1.5; v[id] += 6 * dt; }
-        this.pending -= put; this.poured += put / 1000;
+        if (put > 0) for (const id of this.steamCells) { const share = Math.max(0, 590 - W[id]) * cv / room_; W[id] += put * share / cv; T[id] += (105 - T[id]) * dt * 1.5; v[id] += (this.JET ?? 8) * dt; }
+        this.pending -= put; this.poured += put / 1000; this.vap += put;
       }
       if (this.pour > 0) this.pour -= dt;
       this.velBnd(); this.project();
@@ -115,6 +124,11 @@
       this.velBnd(); this.project();
       this.scalarBnd(T); this.scalarBnd(W);
       this.T0.set(T); this.advect(T, this.T0, dt); this.W0.set(W); this.advect(W, this.W0, dt);
+      // keep the water: moving it around must not make vapour vanish (the advection is not mass-conserving);
+      // it only leaves slowly with the fresh air (about 0.4 % per second)
+      this.vap *= 1 - dt * 0.004;
+      { const cv = c * c * c; let ex = 0; for (const id of fluid) if (W[id] > 22) ex += (W[id] - 22) * cv;
+        if (ex > 1 && this.vap > 0) { const f = Math.min(3, this.vap / ex); for (const id of fluid) if (W[id] > 22) W[id] = Math.min(590, 22 + (W[id] - 22) * f); } }
     }
     at(f, x, y, z) {
       const i = Math.max(1, Math.min(this.NX, Math.floor((x - this.x0) / this.c) + 1)), j = Math.max(1, Math.min(this.NY, Math.floor(y / this.c) + 1)), k = Math.max(1, Math.min(this.NZ, Math.floor((z - this.z0) / this.c) + 1));
@@ -173,7 +187,7 @@
       const fw = norm(sub(tgt, eye)), rt = norm(cross(fw, [0, 1, 0])), up = cross(rt, fw), f = Math.min(W, H) * 1.2;
       P = (p) => { const d = sub(p, eye), z = dot(d, fw); return [W / 2 + dot(d, rt) * f / z, H * 0.5 - dot(d, up) * f / z, z, f / z]; };
     }
-    const opt = { steam: true, flow: true, layer: 0 };
+    const opt = { steam: true, flow: true, humid: true, layer: 0, slice: false, color: "temp" };
     const tracers = [];
     function draw(room, master, guests) {
       if (!W) size(); camera(room); ctx.clearRect(0, 0, W, H);
@@ -192,8 +206,12 @@
       // benches as boxes
       for (const b of room.benches) {
         const pt = (t, d, y) => [b.a[0] + b.dir[0] * t + b.n[0] * d, y, b.a[1] + b.dir[1] * t + b.n[1] * d];
-        const top = [pt(0, b.d0, b.h), pt(b.L, b.d0, b.h), pt(b.L, b.d1, b.h), pt(0, b.d1, b.h)], front = [pt(0, b.d1, 0), pt(b.L, b.d1, 0), pt(b.L, b.d1, b.h), pt(0, b.d1, b.h)];
-        poly(front, "#9b6235", "rgba(60,30,10,0.4)"); poly(top, "#c98b4f", "rgba(60,30,10,0.4)");
+        const nseg = Math.max(1, Math.ceil(b.L / 0.35));
+        for (let q = 0; q < nseg; q++) { // short pieces: people sort correctly in front of / behind them
+          const t0 = b.L * q / nseg, t1 = b.L * (q + 1) / nseg;
+          poly([pt(t0, b.d1, 0), pt(t1, b.d1, 0), pt(t1, b.d1, b.h), pt(t0, b.d1, b.h)], "#9b6235", "rgba(60,30,10,0.35)");
+          poly([pt(t0, b.d0, b.h), pt(t1, b.d0, b.h), pt(t1, b.d1, b.h), pt(t0, b.d1, b.h)], "#c98b4f", "rgba(60,30,10,0.35)");
+        }
       }
       // stove with stones
       { const o = room.oven, r = o.r, h = o.h, c = [[-r, -r], [r, -r], [r, r], [-r, r]].map(([a, b]) => [o.x + a, o.z + b]);
@@ -202,9 +220,13 @@
       // guests
       guests.forEach((g) => {
         const hot = Math.min(1, Math.max(0, (g.s.total - 450) / 1100)), col = `rgb(${Math.round(226 + 29 * hot)},${Math.round(186 - 120 * hot)},${Math.round(150 - 110 * hot)})`;
-        const seat = [g.x, g.seatH, g.y], knee = [g.x + g.n[0] * 0.42, g.seatH + 0.02, g.y + g.n[1] * 0.42], sh = [g.x - g.n[0] * 0.04, g.seatH + 0.5, g.y - g.n[1] * 0.04], hd = [g.x - g.n[0] * 0.02, g.head, g.y - g.n[1] * 0.02];
-        cap(items, seat, sh, 0.3, col); cap(items, seat, knee, 0.15, col); cap(items, knee, [knee[0] + g.n[0] * 0.03, Math.max(0.05, g.seatH - 0.45), knee[2] + g.n[1] * 0.03], 0.11, col);
+        const seat = [g.x, g.seatH + 0.06, g.y], knee = [g.x + g.n[0] * 0.3, g.seatH + 0.08, g.y + g.n[1] * 0.3], sh = [g.x - g.n[0] * 0.03, g.seatH + 0.52, g.y - g.n[1] * 0.03], hd = [g.x - g.n[0] * 0.01, g.head, g.y - g.n[1] * 0.01];
+        cap(items, seat, sh, 0.28, col); cap(items, seat, knee, 0.14, col); cap(items, knee, [knee[0] + g.n[0] * 0.04, Math.max(0.05, g.seatH - 0.36), knee[2] + g.n[1] * 0.04], 0.11, col);
         ball(items, hd, 0.11, col, g.warn ? "#c0471f" : "#2b1d14");
+        if (g.flash > 0 || g.hitLabel) { const H_ = P(hd); items.push({ z: -1e8, d: () => {
+          if (g.flash > 0) { ctx.strokeStyle = `rgba(255,120,40,${g.flash.toFixed(2)})`; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(H_[0], H_[1], (0.14 + 0.25 * (1 - g.flash)) * H_[3], 0, TAU); ctx.stroke(); }
+          if (g.hitLabel) { ctx.font = "700 11px system-ui"; ctx.textAlign = "center"; ctx.fillStyle = "rgba(255,253,249,0.85)"; const w_ = ctx.measureText(g.hitLabel).width + 8; ctx.fillRect(H_[0] - w_ / 2, H_[1] - 0.17 * H_[3] - 15, w_, 15); ctx.fillStyle = "#7a3e1d"; ctx.fillText(g.hitLabel, H_[0], H_[1] - 0.17 * H_[3] - 4); }
+        } }); }
       });
       // the sauna master (a bear) with a towel
       if (master) {
@@ -227,30 +249,69 @@
           const col = heatColor(room.T[id]); poly([[x, y, z], [x + c, y, z], [x + c, y, z + c], [x, y, z + c]], `rgba(${col.map(Math.round).join(",")},0.55)`);
         }
       }
+      // weather map: a vertical slice from the stove towards the benches, coloured by temperature, with arrows of the flow in it
+      if (opt.slice) {
+        const S_ = room.seats, o = room.oven, g = S_.length ? S_.reduce((a, q) => [a[0] + q.x / S_.length, a[1] + q.y / S_.length], [0, 0]) : [o.x + 1, o.z];
+        let d = [g[0] - o.x, g[1] - o.z]; const dl = Math.hypot(...d) || 1; d = [d[0] / dl, d[1] / dl];
+        const c = room.c, step = c * 1.3;
+        for (let s_ = -4; s_ <= 4; s_ += step) for (let y = step / 2; y < room.H; y += step) {
+          const x = o.x + d[0] * s_, z = o.z + d[1] * s_; if (!root.AufgussPlan.inside(room.plan.pts, x, z) || room.at(room.solid, x, y, z)) continue;
+          const T = room.at(room.T, x, y, z), col = heatColor(T).map(Math.round).join(",");
+          const a0 = [x - d[0] * step / 2, y - step / 2, z - d[1] * step / 2], a1 = [x + d[0] * step / 2, y - step / 2, z + d[1] * step / 2], a2 = [a1[0], y + step / 2, a1[2]], a3 = [a0[0], y + step / 2, a0[2]];
+          poly([a0, a1, a2, a3], `rgba(${col},0.42)`);
+          const u = room.at(room.u, x, y, z), vv = room.at(room.v, x, y, z), w = room.at(room.w, x, y, z), along = u * d[0] + w * d[1], sp = Math.hypot(along, vv);
+          if (sp > 0.04) { const k = Math.min(1, sp / 0.8) * step * 0.9 / sp, A = P([x, y, z]), Bp = P([x + d[0] * along * k, y + vv * k, z + d[1] * along * k]);
+            items.push({ z: A[2] - 0.02, d: () => arrow(A, Bp, `rgba(${col},1)`, 1.6) }); }
+        }
+      }
+      // humid air that condenses on skin (dew point above 38 °C): an orange haze that spreads through the cabin
+      if (opt.humid) {
+        const c = room.c;
+        for (const id of room.fluid) {
+          const wv = room.W[id]; if (wv < 45) continue;
+          const td = dewPoint(room.T[id], wv); if (td < T_SKIN) continue;
+          const k = Math.floor(id / room.SXY), r = id - k * room.SXY, j = Math.floor(r / room.SX), i = r - j * room.SX;
+          const s_ = P([room.x0 + (i - 0.5) * c, (j - 0.5) * c, room.z0 + (k - 0.5) * c]); if (s_[2] <= 0.1) continue;
+          const a = Math.min(0.13, (td - T_SKIN) / 140), rad = c * 0.8 * s_[3];
+          items.push({ z: s_[2], d: () => { ctx.fillStyle = `rgba(240,110,60,${a.toFixed(3)})`; ctx.beginPath(); ctx.arc(s_[0], s_[1], rad, 0, TAU); ctx.fill(); } });
+        }
+      }
       // steam: one soft disc per humid cell (white on white is order-independent, but we keep it in the depth sort)
       if (opt.steam) {
         const c = room.c, Wf = room.W;
         for (const id of room.fluid) {
-          const wv = Wf[id]; if (wv < 70) continue;
+          const wv = Wf[id]; if (wv < 160) continue; // visible mist: close to saturation
           const k = Math.floor(id / room.SXY), r = id - k * room.SXY, j = Math.floor(r / room.SX), i = r - j * room.SX;
           const s = P([room.x0 + (i - 0.5) * c, (j - 0.5) * c, room.z0 + (k - 0.5) * c]); if (s[2] <= 0.1) continue;
-          const a = Math.min(0.3, (wv - 70) / 800), rad = c * 0.9 * s[3];
+          const a = Math.min(0.32, (wv - 160) / 700), rad = c * 0.9 * s[3];
           items.push({ z: s[2], d: () => { ctx.fillStyle = `rgba(255,255,255,${a.toFixed(3)})`; ctx.beginPath(); ctx.arc(s[0], s[1], rad, 0, TAU); ctx.fill(); } });
         }
       }
-      items.sort((a, b) => b.z - a.z).forEach((it) => it.d());
-      // flow tracers
+      // flow: moving arrows with short tails, coloured blue → red by temperature (or by humidity)
       if (opt.flow) {
-        while (tracers.length < 260) tracers.push(newTracer(room));
-        ctx.strokeStyle = "rgba(63,111,128,0.6)"; ctx.lineWidth = 1.2;
+        while (tracers.length < 340) tracers.push(newTracer(room));
         for (const t of tracers) {
-          const u = room.at(room.u, ...t.p), vv = room.at(room.v, ...t.p), w = room.at(room.w, ...t.p), sp = Math.hypot(u, vv, w);
-          if (sp > 0.05) { const a = P(t.p), b = P(sub(t.p, mul([u, vv, w], 0.15))); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
+          if (!t.tail || t.tail.length < 3) continue;
+          const T = room.at(room.T, ...t.p), Wg = room.at(room.W, ...t.p);
+          const col = opt.color === "humid" ? humidColor(dewPoint(T, Wg)) : heatColor(T);
+          const pts = t.tail.map(P), last = pts[pts.length - 1], prev = pts[pts.length - 2];
+          items.push({ z: last[2] - 0.03, d: () => {
+            ctx.strokeStyle = `rgba(${col.map(Math.round).join(",")},0.9)`; ctx.lineWidth = 1.6; ctx.lineCap = "round";
+            ctx.beginPath(); pts.forEach((q, i) => (i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]))); ctx.stroke();
+            arrowHead(prev, last, `rgba(${col.map(Math.round).join(",")},1)`);
+          } });
         }
       }
+      items.sort((a, b) => b.z - a.z).forEach((it) => it.d());
     }
+    function humidColor(td) { // dry blue → 38 °C (condenses on skin) orange → very humid deep red
+      if (td < 20) return [70, 110, 160]; if (td < T_SKIN) { const f = (td - 20) / (T_SKIN - 20); return [70 + 150 * f, 110 + 60 * f, 160 - 80 * f]; }
+      const f = Math.min(1, (td - T_SKIN) / 20); return [240 - 40 * f, 120 - 80 * f, 50 - 20 * f];
+    }
+    function arrowHead(a, b, col) { const dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy); if (l < 0.5) return; const ux = dx / l, uy = dy / l, s_ = 5; ctx.fillStyle = col; ctx.beginPath(); ctx.moveTo(b[0] + ux * 2, b[1] + uy * 2); ctx.lineTo(b[0] - ux * s_ - uy * s_ * 0.6, b[1] - uy * s_ + ux * s_ * 0.6); ctx.lineTo(b[0] - ux * s_ + uy * s_ * 0.6, b[1] - uy * s_ - ux * s_ * 0.6); ctx.closePath(); ctx.fill(); }
+    function arrow(a, b, col, w) { ctx.strokeStyle = col; ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); arrowHead(a, b, col); }
     function newTracer(room) { for (let n = 0; n < 30; n++) { const id = room.fluid[(Math.random() * room.fluid.length) | 0], k = Math.floor(id / room.SXY), r = id - k * room.SXY, j = Math.floor(r / room.SX), i = r - j * room.SX; return { p: [room.x0 + (i - Math.random()) * room.c, (j - Math.random()) * room.c, room.z0 + (k - Math.random()) * room.c], age: 2 + Math.random() * 3 }; } }
-    function moveTracers(room, dt) { for (let n = 0; n < tracers.length; n++) { const t = tracers[n]; t.p = add(t.p, mul([room.at(room.u, ...t.p), room.at(room.v, ...t.p), room.at(room.w, ...t.p)], dt)); t.age -= dt; if (t.age < 0 || room.at(room.solid, ...t.p)) tracers[n] = newTracer(room); } }
+    function moveTracers(room, dt) { for (let n = 0; n < tracers.length; n++) { const t = tracers[n]; t.p = add(t.p, mul([room.at(room.u, ...t.p), room.at(room.v, ...t.p), room.at(room.w, ...t.p)], dt)); t.tail = (t.tail || []).concat([t.p]).slice(-7); t.age -= dt; if (t.age < 0 || t.p[1] < 0.02 || t.p[1] > room.H - 0.02 || !root.AufgussPlan.inside(room.plan.pts, t.p[0], t.p[2]) || room.at(room.solid, ...t.p)) tracers[n] = newTracer(room); } }
     function cap(items, a, b, w, col) { const A = P(a), B = P(b); items.push({ z: (A[2] + B[2]) / 2, d: () => { const px = w * (A[3] + B[3]) / 2; ctx.lineCap = "round"; ctx.strokeStyle = "#2b1d14"; ctx.lineWidth = px + 3; ctx.beginPath(); ctx.moveTo(A[0], A[1]); ctx.lineTo(B[0], B[1]); ctx.stroke(); ctx.strokeStyle = col; ctx.lineWidth = px; ctx.stroke(); } }); }
     function ball(items, c, r, col, line) { const C = P(c); items.push({ z: C[2] - 0.01, d: () => { ctx.fillStyle = col; ctx.strokeStyle = line; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.arc(C[0], C[1], r * C[3], 0, TAU); ctx.fill(); ctx.stroke(); } }); }
     // orbit
@@ -262,7 +323,11 @@
     cv.addEventListener("pointerup", up); cv.addEventListener("pointercancel", up);
     cv.addEventListener("wheel", (e) => { cam.dist = Math.max(2.5, Math.min(14, cam.dist * (e.deltaY > 0 ? 1.08 : 0.93))); e.preventDefault(); }, { passive: false });
     root.addEventListener("resize", size);
-    return { draw, moveTracers, opt, cam, size, reset() { tracers.length = 0; } };
+    function faceSlice(room) { // look at the stove–bench plane from the side
+      const S_ = room.seats, o = room.oven, g = S_.length ? S_.reduce((a, q) => [a[0] + q.x / S_.length, a[1] + q.y / S_.length], [0, 0]) : [o.x + 1, o.z];
+      const d = [g[0] - o.x, g[1] - o.z]; cam.yaw = Math.atan2(-d[1], d[0]); cam.pitch = 0.18;
+    }
+    return { draw, moveTracers, opt, cam, size, faceSlice, reset() { tracers.length = 0; } };
   }
 
   // ---------- page ----------
@@ -278,7 +343,10 @@
       </div>
       <div class="controls">
         <label><input type="checkbox" id="s3Steam" checked> ${tr("steam", "Dampf")}</label>
-        <label><input type="checkbox" id="s3Flow" checked> ${tr("air flow", "Luftströmung")}</label>
+        <label><input type="checkbox" id="s3Flow" checked> ${tr("moving air", "bewegte Luft")}</label>
+        <label>${tr("colour", "Farbe")} <select id="s3Col"><option value="temp">${tr("temperature", "Temperatur")}</option><option value="humid">${tr("humidity (dew point)", "Feuchte (Taupunkt)")}</option></select></label>
+        <label><input type="checkbox" id="s3Humid" checked> ${tr("humid air that condenses on skin", "feuchte Luft, die auf der Haut kondensiert")}</label>
+        <label><input type="checkbox" id="s3Slice"> ${tr("weather map through stove and benches", "Wetterkarte durch Ofen und Bänke")}</label>
         <label>${tr("Heat layer", "Wärmeschicht")} <select id="s3Layer"><option value="0">${tr("off", "aus")}</option><option value="1.0">1,0 m</option><option value="1.6">1,6 m</option><option value="2.0">2,0 m</option></select></label>
       </div>
       <p class="hint" id="s3Phase" aria-live="polite"></p>
@@ -288,10 +356,13 @@
     function guests() {
       return room.seats.map((s) => {
         const T = room.at(room.T, s.x, s.head, s.y), Wg = room.at(room.W, s.x, s.head, s.y), sp = room.speed(s.x, s.head, s.y), k = skin(T, Wg, sp), td = dewPoint(T, Wg);
-        return Object.assign({}, s, { T, Wg, td, s: k, warn: k.total > 1150 || td > 58 });
+        const key = s.x.toFixed(2) + "," + s.y.toFixed(2) + "," + s.row; let h = hits.get(key);
+        if (t >= 0 && pourAt != null && !h && td > T_SKIN) { h = { at: t - pourAt, shown: performance.now() }; hits.set(key, h); }
+        const flash = h ? Math.max(0, 1 - (performance.now() - h.shown) / 1500) : 0;
+        return Object.assign({}, s, { T, Wg, td, s: k, warn: k.total > 1150 || td > 58, flash, hitLabel: h ? "+" + h.at.toFixed(1).replace(".", lang === "de" ? "," : ".") + " s" : "" });
       });
     }
-    let firstFelt = null, routineStart = 0;
+    let firstFelt = null, routineStart = 0; const dec = (x) => x.toFixed(1).replace(".", lang === "de" ? "," : ".");
     function panel(G) {
       const top = G.filter((g) => g.top), low = G.filter((g) => g.row === 1), hot = G.reduce((a, g) => (!a || g.s.total > a.s.total ? g : a), null);
       const avg = (L, f) => (L.length ? L.reduce((s, g) => s + f(g), 0) / L.length : 0);
@@ -302,6 +373,8 @@
         <span>${tr("heat into the skin", "Wärme in die Haut")} <b>${f(hot.s.total)} W/m²</b> · ${tr("feels like", "fühlt sich an wie")} ${f(hot.s.feels)} °C ${tr("dry", "trocken")}</span>
         ${hot.warn ? `<span class="warn">${tr("Hot enough to hurt: ears and lips first. Lower the head, breathe slowly through the nose, wipe the ears.", "Heiß genug, dass es wehtut: zuerst Ohren und Lippen. Kopf senken, langsam durch die Nase atmen, Ohren abwischen.")}</span>` : ""}</div>`;
       html += `<p>${tr("Top row average", "Obere Reihe im Schnitt")}: <b>${f(avg(top, (g) => g.s.total))} W/m²</b> · ${tr("lowest row", "unterste Reihe")}: <b>${f(avg(low, (g) => g.s.total))} W/m²</b></p>`;
+      if (hits.size) { const byRow = {}; for (const g of G) { const h = g.hitLabel; if (!h) continue; const v_ = parseFloat(h.slice(1).replace(",", ".")); (byRow[g.row] = byRow[g.row] || []).push(v_); }
+        html += `<p>${tr("Humid air reached the skin (dew point above 38 °C) after", "Feuchte Luft erreichte die Haut (Taupunkt über 38 °C) nach")}: ${Object.keys(byRow).sort((a, b) => b - a).map((r) => `${tr("row", "Reihe")} ${r}: <b>${dec(Math.min(...byRow[r]))}–${dec(Math.max(...byRow[r]))} s</b>`).join(" · ")} · ${G.filter((g) => g.hitLabel).length}/${G.length} ${tr("guests", "Gäste")}</p>`; }
       if (firstFelt != null) html += `<p>${tr("Steam started condensing on the farthest guest", "Auf dem entferntesten Gast begann der Dampf zu kondensieren")} ${firstFelt.toFixed(0)} s ${tr("after pouring", "nach dem Aufguss")}.</p>`;
       html += `<p class="hint">${tr(`Water poured: ${room.poured.toFixed(1)} l · grid ${room.NX}×${room.NY}×${room.NZ} cells of ${Math.round(room.c * 100)} cm`, `Aufgegossen: ${room.poured.toFixed(1).replace(".", ",")} l · Gitter ${room.NX}×${room.NY}×${room.NZ} Zellen à ${Math.round(room.c * 100)} cm`)}</p>`;
       el.querySelector("#s3Out").innerHTML = html;
@@ -310,7 +383,7 @@
     let master = routine(room, 1e9);
     let farSeat = null; function pickFar() { const o = room.oven; farSeat = room.seats.reduce((a, s) => (!a || Math.hypot(s.x - o.x, s.y - o.z) > Math.hypot(a.x - o.x, a.y - o.z) ? s : a), null); }
     pickFar();
-    let fc = 0, last = 0, poured = false, acc = 0;
+    let fc = 0, last = 0, poured = false, acc = 0, pourAt = null; const hits = new Map();
     function frame(now) {
       raf = requestAnimationFrame(frame);
       const rdt = Math.min(0.1, (now - (last || now)) / 1000); last = now;
@@ -320,7 +393,7 @@
           let r = routine(room, t);
           if (!run && r.phase !== "pour") r = Object.assign(routine(room, Math.min(t, 9)), { phase: t < 10 ? "wait" : "done" }); // only pouring: nobody waves
           master = r;
-          if (r.pour && !poured) { room.pourWater(500); poured = true; }
+          if (r.pour && !poured) { room.pourWater(500); poured = true; pourAt = t; hits.clear(); }
           room.forces = run && r.push ? [r.push] : [];
           if (farSeat && firstFelt == null && t > 1 && dewPoint(room.at(room.T, farSeat.x, farSeat.head, farSeat.y), room.at(room.W, farSeat.x, farSeat.head, farSeat.y)) > T_SKIN) firstFelt = t;
           t += 1 / 15; if (t > 120) { t = -1; room.forces = []; }
@@ -333,10 +406,13 @@
     function start(withWaving) { run = withWaving; t = 0; firstFelt = null; poured = false; }
     el.querySelector("#s3Run").onclick = () => start(true);
     el.querySelector("#s3Pour").onclick = () => start(false);
-    el.querySelector("#s3Reset").onclick = () => { room.reset(); t = -1; master = routine(room, 1e9); firstFelt = null; view.reset(); warm(); };
+    el.querySelector("#s3Reset").onclick = () => { hits.clear(); pourAt = null; room.reset(); t = -1; master = routine(room, 1e9); firstFelt = null; view.reset(); warm(); };
     el.querySelector("#s3Speed").onchange = (e) => (speed = +e.target.value);
     el.querySelector("#s3Steam").onchange = (e) => (view.opt.steam = e.target.checked);
     el.querySelector("#s3Flow").onchange = (e) => (view.opt.flow = e.target.checked);
+    el.querySelector("#s3Col").onchange = (e) => (view.opt.color = e.target.value);
+    el.querySelector("#s3Humid").onchange = (e) => (view.opt.humid = e.target.checked);
+    el.querySelector("#s3Slice").onchange = (e) => { view.opt.slice = e.target.checked; if (e.target.checked) view.faceSlice(room); };
     el.querySelector("#s3Layer").onchange = (e) => (view.opt.layer = +e.target.value);
     function warm() { for (let i = 0; i < 90; i++) room.step(1 / 15); }
     warm(); view.size(); raf = requestAnimationFrame(frame);

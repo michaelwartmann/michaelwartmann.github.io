@@ -8,7 +8,7 @@
   const T = {
     en: {
       tagline: "Design your sauna infusion, round by round.",
-      tabDesign: "Design", tabTech: "Techniques", tabPhys: "Physics", tabAbout: "About",
+      tabMe: "You", tabDesign: "Design", tabTech: "Techniques", tabPhys: "Physics", tabSaunas: "Saunas", tabAbout: "About",
       setup: "Your infusion", minutes: "Length", min: "min", temp: "Sauna temperature", seats: "Guests who fit", clearance: "Heads on the top bench to the ceiling", clTight: "under 20 cm", clNormal: "20–40 cm", clRoomy: "more than 40 cm", reach: "Farthest guest from the oven", rNear: "under 2 m", rMid: "2–4 m", rFar: "more than 4 m", extras: "Extras", estimate: "estimate", watchTop: "Watch the top bench: if people bend forward or look pale and dizzy, ease off; dizzy guests go to a lower bench or lie down.", tightTxt: "Heads are close to the ceiling, in the hottest layer: a little less water, spread fast.", farTxt: "Far guests: the steam needs longer, keep distributing towards the back rows.", extraTxt: "Hand out: ",
       level: "Your level", lv1: "Beginner", lv2: "Intermediate", lv3: "Advanced",
       style: "Style", rounds: "Rounds", auto: "auto", theme: "Theme (optional)", themePh: "e.g. Forest morning, Ice palace",
@@ -35,7 +35,7 @@
       warnNoTech: "You haven't ticked any techniques yet. Go to Techniques and tick what you can do. Until then the beginner set is used.",
       warnWater: "Scent in the water is less elegant: the oil floats and every round smells the same. Ice balls give each round its own scent.",
       heat: "Heat", show: "Show", air: "Air", family: "Family", related: "Related", canDo: "I can do this",
-      toVerify: "description to verify", tempo: "Tempo", tempoHint: "Slower and the towel folds: it only holds its shape when it moves fast enough.",
+      toVerify: "description to verify", tempo: "Tempo", tempoHint: "1× is the tempo of the tutorial video, which is slow and clean on purpose. Experienced masters go up to 1.5× (rotations up to 2×). Slower and the towel folds.",
       play: "Play", pause: "Pause", all: "All", mine: "Mine", close: "Close",
       fam: { rotation: "Rotation", eight: "Figure eight", sweep: "Sweep", whip: "Strike", flatspin: "Flat spin", throw: "Throw", wave: "Wave", pass: "Pass" },
       install: "Install on your phone", installTxt: "Android: menu ⋮ → Add to Home screen. iPhone: Share → Add to Home Screen. Works offline after the first visit.",
@@ -56,7 +56,7 @@
     },
     de: {
       tagline: "Gestalte deinen Saunaaufguss, Runde für Runde.",
-      tabDesign: "Gestalten", tabTech: "Techniken", tabPhys: "Physik", tabAbout: "Über",
+      tabMe: "Du", tabDesign: "Gestalten", tabTech: "Techniken", tabPhys: "Physik", tabSaunas: "Saunen", tabAbout: "Über",
       setup: "Dein Aufguss", minutes: "Dauer", min: "Min.", temp: "Saunatemperatur", seats: "Gäste, die Platz haben", clearance: "Köpfe auf der oberen Bank bis zur Decke", clTight: "unter 20 cm", clNormal: "20–40 cm", clRoomy: "mehr als 40 cm", reach: "Fernster Gast vom Ofen", rNear: "unter 2 m", rMid: "2–4 m", rFar: "mehr als 4 m", extras: "Extras", estimate: "geschätzt", watchTop: "Die obere Bank beobachten: Wenn sich Leute nach vorn beugen oder blass und schwindlig wirken, zurücknehmen; Schwindlige setzen sich tiefer oder legen sich hin.", tightTxt: "Die Köpfe sind nah an der Decke, in der heißesten Schicht: etwas weniger Wasser, schnell verteilen.", farTxt: "Ferne Gäste: Der Dampf braucht länger, weiter zu den hinteren Reihen verteilen.", extraTxt: "Reichen: ",
       level: "Dein Level", lv1: "Einsteiger", lv2: "Fortgeschritten", lv3: "Profi",
       style: "Stil", rounds: "Runden", auto: "auto", theme: "Thema (optional)", themePh: "z. B. Waldmorgen, Eispalast",
@@ -83,7 +83,7 @@
       warnNoTech: "Du hast noch keine Techniken angekreuzt. Unter Techniken ankreuzen, was du kannst. Bis dahin wird das Einsteiger-Set verwendet.",
       warnWater: "Duft im Wasser ist weniger elegant: Das Öl schwimmt oben und jede Runde riecht gleich. Eiskugeln geben jeder Runde ihren eigenen Duft.",
       heat: "Hitze", show: "Show", air: "Luft", family: "Familie", related: "Verwandt mit", canDo: "Kann ich",
-      toVerify: "Beschreibung noch prüfen", tempo: "Tempo", tempoHint: "Langsamer, und das Tuch fällt zusammen: Es hält seine Form nur, wenn es schnell genug bewegt wird.",
+      toVerify: "Beschreibung noch prüfen", tempo: "Tempo", tempoHint: "1× ist das Tempo des Tutorial-Videos, bewusst langsam und sauber. Erfahrene gehen bis 1,5× (Rotationen bis 2×). Langsamer, und das Tuch fällt zusammen.",
       play: "Abspielen", pause: "Pause", all: "Alle", mine: "Meine", close: "Schließen",
       fam: { rotation: "Drehung", eight: "Acht", sweep: "Schwung", whip: "Schlag", flatspin: "Flache Drehung", throw: "Wurf", wave: "Welle", pass: "Durchgang" },
       install: "Aufs Handy holen", installTxt: "Android: Menü ⋮ → Zum Startbildschirm hinzufügen. iPhone: Teilen → Zum Home-Bildschirm. Funktioniert nach dem ersten Besuch offline.",
@@ -150,7 +150,9 @@
     let roundTime = (S.minutes - intro - opening - closing - (airAt >= 0 ? airTime : 0) - finaleAb) / rounds;
     if (roundTime < 1.2) { roundTime = 1.2; }
 
-    const volume = RULES.volumeFromSeats(S.seats || 20);
+    const cab = S.cabin && PL && PL.cabins().find((c) => c.id === S.cabin);
+    if (cab) { const st = PL.stats(cab.plan); S = Object.assign({}, S, { seats: st.seats, clearance: st.clear < 0.2 ? "tight" : st.clear > 0.4 ? "roomy" : "normal", reach: st.reach < 2 ? "near" : st.reach > 4 ? "far" : "mid", _vol: st.volume }); }
+    const volume = S._vol ? Math.round(S._vol * 10) / 10 : RULES.volumeFromSeats(S.seats || 20);
     const totalWater = RULES.waterPerM3 * volume * (RULES.clearanceFactor[S.clearance] || 1);
     const reachF = RULES.reachFactor[S.reach] || 1;
     const weights = rounds === 2 ? [0.4, 0.6] : rounds === 3 ? [0.25, 0.35, 0.4] : [0.2, 0.25, 0.25, 0.3];
@@ -222,7 +224,7 @@
     $("#tagline").textContent = t("tagline");
     document.querySelectorAll("[data-tab]").forEach((b) => (b.textContent = t("tab" + b.dataset.tab)));
     document.querySelectorAll(".lang button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.lang === lang));
-    renderDesign(); renderLibrary(); renderAbout();
+    renderMeTab(); renderDesign(); renderLibrary(); renderSaunas(); renderAbout();
     if (phys) { phys.stop(); phys = window.AufgussPhysics.mount($("#physics"), lang, RULES); if ($("#physics").hidden) phys.pause(); }
   }
 
@@ -233,15 +235,18 @@
     const scentSel = (i) => `<select data-scent="${i}" aria-label="${t("scents")} ${i + 1}">${SCENTS.map((s) => `<option value="${s.id}" ${S.scents[i] === s.id ? "selected" : ""}>${esc(nm(s))}</option>`).join("")}</select>`;
     const rounds = S.rounds || (S.minutes >= 12 ? 4 : S.minutes >= 8 ? 3 : 2);
     $("#design").innerHTML = `
-      <section class="card" id="meCard" aria-live="polite"></section>
       <section class="card" aria-labelledby="setupH">
         <h2 id="setupH">${t("setup")}</h2>
         <label class="row"><span>${t("minutes")}</span><output>${S.minutes} ${t("min")}</output></label>
         <input type="range" min="6" max="15" step="1" value="${S.minutes}" data-k="minutes" aria-label="${t("minutes")}">
         <label class="row"><span>${t("temp")}</span><output>${S.temp} °C</output></label>
         <input type="range" min="70" max="105" step="5" value="${S.temp}" data-k="temp" aria-label="${t("temp")}">
+        ${PL ? `<label class="row"><span>${lang === "de" ? "Sauna" : "Sauna"}</span><select data-cabin>
+          <option value="">${lang === "de" ? "geschätzt aus der Gästezahl" : "estimate from the number of guests"}</option>
+          ${PL.cabins().map((c) => `<option value="${c.id}" ${c.id === S.cabin ? "selected" : ""}>${esc(c.name)}</option>`).join("")}</select></label>` : ""}
+        ${S.cabin && PL && PL.cabins().find((c) => c.id === S.cabin) ? `<p class="hint">${cabinInfo(PL.cabins().find((c) => c.id === S.cabin)).line}</p>` : `
         <label class="row"><span>${t("seats")}</span><output>${S.seats} · ≈ ${RULES.volumeFromSeats(S.seats)} m³ (${t("estimate")})</output></label>
-        <input type="range" min="2" max="80" step="1" value="${S.seats}" data-k="seats" aria-label="${t("seats")}">
+        <input type="range" min="2" max="80" step="1" value="${S.seats}" data-k="seats" aria-label="${t("seats")}">`}
         <div class="grid2">
           <label>${t("level")}<select data-k="level">${[1, 2, 3].map((l) => `<option value="${l}" ${S.level == l ? "selected" : ""}>${t("lv" + l)}</option>`).join("")}</select></label>
           <label>${t("style")}<select data-k="style">${opt(STYLES, S.style)}</select></label>
@@ -254,16 +259,43 @@
             <option value="draft" ${S.airingAvail === "draft" ? "selected" : ""}>${t("airDraft")}</option></select></label>
           <label>${t("between")}<select data-k="between" ${S.airingAvail === "none" ? "disabled" : ""}>${opt(OPTIONS.between.filter((o) => S.airingAvail === "draft" || o.id !== "draft"), S.between)}</select></label>
           <label>${t("closing")}<select data-k="closing">${opt(OPTIONS.closing, S.closing)}</select></label>
-          <label>${t("clearance")}<select data-k="clearance">${["tight", "normal", "roomy"].map((c) => `<option value="${c}" ${S.clearance === c ? "selected" : ""}>${t("cl" + c[0].toUpperCase() + c.slice(1))}</option>`).join("")}</select></label>
-          <label>${t("reach")}<select data-k="reach">${["near", "mid", "far"].map((c) => `<option value="${c}" ${S.reach === c ? "selected" : ""}>${t("r" + c[0].toUpperCase() + c.slice(1))}</option>`).join("")}</select></label>
+          ${S.cabin ? "" : `<label>${t("clearance")}<select data-k="clearance">${["tight", "normal", "roomy"].map((c) => `<option value="${c}" ${S.clearance === c ? "selected" : ""}>${t("cl" + c[0].toUpperCase() + c.slice(1))}</option>`).join("")}</select></label>`}
+          ${S.cabin ? "" : `<label>${t("reach")}<select data-k="reach">${["near", "mid", "far"].map((c) => `<option value="${c}" ${S.reach === c ? "selected" : ""}>${t("r" + c[0].toUpperCase() + c.slice(1))}</option>`).join("")}</select></label>`}
           <label>${t("extras")}<select data-k="extras">${opt(EXTRAS, S.extras)}</select></label>
         </div>
         <fieldset class="scents"><legend>${t("scents")}</legend>${Array.from({ length: rounds }, (_, i) => scentSel(i)).join("")}</fieldset>
         <label>${t("theme")}<input type="text" data-k="theme" value="${esc(S.theme)}" placeholder="${esc(t("themePh"))}"></label>
       </section>
       <section id="planOut" aria-live="polite"></section>`;
-    renderMe();
     renderPlan();
+  }
+
+  // ---------- Tab "You": who is waving ----------
+  function renderMeTab() {
+    $("#me").innerHTML = `
+      <section class="card" id="meCard" aria-live="polite"></section>
+      <section class="card"><h2>${lang === "de" ? "So geht's weiter" : "Where to go next"}</h2>
+        <p>${lang === "de" ? "Techniken: lernen, ansehen, im Wedel-Labor ausprobieren. Physik: verstehen, was in der Luft passiert. Saunen: deine Kabinen erfassen. Gestalten: daraus deinen Aufguss bauen." : "Techniques: learn, watch, try them in the towel lab. Physics: understand what happens in the air. Saunas: capture your cabins. Design: build your infusion from all of it."}</p></section>`;
+    renderMe();
+  }
+
+  // ---------- Tab "Saunas": the cabins on this phone ----------
+  const PL = window.AufgussPlan;
+  function cabinInfo(c) {
+    const st = PL.stats(c.plan), f = (x, d = 1) => x.toFixed(d).replace(".", lang === "de" ? "," : ".");
+    return { st, line: `${f(st.area)} m² · ${f(st.volume)} m³ · ${st.seats} ${lang === "de" ? "Plätze" : "seats"} · ${lang === "de" ? "Köpfe bis Decke" : "heads to ceiling"} ${Math.round(st.clear * 100)} cm` };
+  }
+  function renderSaunas() {
+    if (!PL) return;
+    const L = PL.cabins(), use = settings.cabin;
+    $("#saunas").innerHTML = `
+      <section class="card"><h2>${lang === "de" ? "Deine Saunen" : "Your saunas"}</h2>
+        <p class="hint">${lang === "de" ? "Erfasse jede Kabine, in der du Aufgüsse machst: Grundriss, Bänke, Decke, Ofen. Alles bleibt auf diesem Handy. Gestalten nutzt die gewählte Kabine für Wassermenge und Verteilung." : "Capture every cabin where you do infusions: floor plan, benches, ceiling, stove. Everything stays on this phone. Design uses the chosen cabin for water and distribution."}</p>
+        ${L.map((c) => { const i = cabinInfo(c); return `<div class="cab" aria-current="${c.id === use}"><b>${esc(c.name)}</b><span class="hint">${i.line}</span>
+          <div class="controls"><a class="labbtn" href="sauna.html?id=${c.id}">${lang === "de" ? "Bearbeiten · 3D" : "Edit · 3D"}</a>
+          <button data-usecab="${c.id}" aria-pressed="${c.id === use}">${c.id === use ? (lang === "de" ? "Für meinen Aufguss ✓" : "For my infusion ✓") : (lang === "de" ? "Für meinen Aufguss" : "Use for my infusion")}</button></div></div>`; }).join("")}
+        <p class="controls"><button data-newcab>${lang === "de" ? "+ Neue Sauna" : "+ New sauna"}</button></p>
+      </section>`;
   }
 
   // ---------- Profile: your sauna animal ----------
@@ -419,7 +451,7 @@
       <canvas id="demoCanvas" role="img" aria-label="${esc(nm(x.name))}"></canvas>
       <label class="figpick">${lang === "de" ? "Figur" : "Figure"} <select id="figSel">${(PR ? PR.ANIMALS.map((a) => a.id) : ["bear", "cat", "panda", "fox", "otter", "tiger", "koala"]).filter((f) => f === "cat" || (window.PoseEngine && window.PoseEngine.KITS[f])).concat(["stick"]).map((f) => `<option value="${f}" ${f === figure ? "selected" : ""}>${FIG[f] ? FIG[f][lang] : PR && PR.ANIMAL[f] ? PR.ANIMAL[f][lang] : f}</option>`).join("")}</select></label>
       <div class="controls"><button id="playBtn">${reduce ? t("play") : t("pause")}</button>
-        <label>${t("tempo")} <input id="tempo" type="range" min="0.25" max="1.5" step="0.05" value="1"></label></div>
+        <label>${t("tempo")} <input id="tempo" type="range" min="0.5" max="${["rotation", "flatspin", "throw"].includes(x.family) ? 2 : 1.5}" step="0.05" value="1"> <output id="tempoO">1×</output></label></div>
       <p class="hint">${t("tempoHint")}</p>
       <p class="controls"><a class="labbtn" href="lab.html?t=${esc(id)}">${lang === "de" ? "Im Wedel-Labor ausprobieren (3D)" : "Try it in the towel lab (3D)"}</a>
         ${ov ? `<button id="ovReset">${lang === "de" ? "Deine Labor-Version · zurücksetzen" : "Your lab version · reset"}</button>` : ""}</p>
@@ -436,7 +468,7 @@
     if (!reduce) demo.play();
     if (ov) $("#ovReset").onclick = () => { const all = store.get("lab.override", {}); delete all[id]; store.set("lab.override", all); closeTech(); openTech(id); };
     $("#playBtn").onclick = () => { if (demo.running) { demo.pause(); $("#playBtn").textContent = t("play"); } else { demo.play(); $("#playBtn").textContent = t("pause"); } };
-    $("#tempo").oninput = (e) => demo.setTempo(parseFloat(e.target.value));
+    $("#tempo").oninput = (e) => { demo.setTempo(parseFloat(e.target.value)); $("#tempoO").textContent = (+e.target.value).toFixed(2).replace(/0$/, "") + "×"; };
     $("#figSel").onchange = (e) => { figure = e.target.value; store.set("figure", figure); closeTech(); openTech(id); };
     if (x.clip) $("#clipBtn").onclick = () => {
       if (clipLoop) { clipLoop.stop(); clipLoop = null; return; }
@@ -463,6 +495,8 @@
       if (settings.seats === undefined) settings.seats = 20;
       store.set("settings", settings);
       if (["rounds", "airingAvail", "style"].includes(k)) renderDesign(); else renderPlan();
+    } else if (el.dataset.cabin !== undefined) {
+      settings.cabin = el.value || null; store.set("settings", settings); renderDesign(); renderSaunas();
     } else if (el.dataset.scent !== undefined) {
       settings.scents[+el.dataset.scent] = el.value; store.set("settings", settings); renderPlan();
     } else if (el.dataset.mine) {
@@ -478,6 +512,9 @@
       if (b.dataset.view === "physics") { if (!phys && window.AufgussPhysics) phys = window.AufgussPhysics.mount($("#physics"), lang, RULES); else if (phys) phys.resume(); }
       else if (phys) phys.pause();
     } else if (b.dataset.lang) { lang = b.dataset.lang; store.set("lang", lang); render(); }
+    else if (b.dataset.usecab) { settings.cabin = settings.cabin === b.dataset.usecab ? null : b.dataset.usecab; store.set("settings", settings); renderSaunas(); renderDesign(); }
+    else if (b.dataset.newcab !== undefined) { const c = PL.addCabin((lang === "de" ? "Sauna " : "Sauna ") + (PL.cabins().length + 1)); location.href = "sauna.html?id=" + c.id; }
+    else if (b.dataset.about !== undefined) { document.querySelectorAll("[data-tab]").forEach((x) => x.setAttribute("aria-selected", "false")); document.querySelectorAll("main > section.view").forEach((s_) => (s_.hidden = s_.id !== "about")); if (phys) phys.pause(); }
     else if (b.dataset.open) openTech(b.dataset.open);
     else if (b.dataset.quiz !== undefined) openQuiz();
     else if (b.dataset.fb) { me = PR.next(me, { tech: b.dataset.fb, heat: b.dataset.fb }); store.set("me", me); applyProfile(); }
@@ -496,6 +533,7 @@
   $("#sheet").addEventListener("click", (e) => { if (e.target.id === "sheet") closeTech(); });
 
   render();
+  if (me) { const d = document.querySelector('[data-tab="Design"]'); d && d.click(); }
   const fromHash = () => { const m = location.hash.match(/^#t-([\w-]+)$/); if (m && byId[m[1]]) openTech(m[1]); };
   fromHash(); window.addEventListener("hashchange", fromHash);
   if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});

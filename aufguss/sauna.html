@@ -46,6 +46,15 @@
   <a href="index.html" data-en="Back to the app" data-de="Zurück zur App">Back to the app</a>
 </header>
 <main>
+  <section class="card cabins">
+    <div class="ed-row">
+      <label><span data-en="Sauna" data-de="Sauna">Sauna</span> <select id="cab"></select></label>
+      <input id="cabName" type="text" aria-label="Name" style="min-height:40px;border:1px solid var(--line);border-radius:10px;padding:0 8px;font:inherit;background:var(--card);color:var(--ink);flex:1;min-width:8em">
+      <button id="cabNew" data-en="New sauna" data-de="Neue Sauna">New sauna</button>
+      <button id="cabDel" data-en="Delete" data-de="Löschen">Delete</button>
+    </div>
+    <p class="hint" data-en="All saunas stay on this phone. A spa with several infusion cabins gets one entry each." data-de="Alle Saunen bleiben auf diesem Handy. Ein Bad mit mehreren Aufgusskabinen bekommt für jede einen Eintrag."></p>
+  </section>
   <section class="card">
     <h2 data-en="1 · Draw the floor plan" data-de="1 · Grundriss zeichnen">1 · Draw the floor plan</h2>
     <div id="editor"></div>
@@ -75,6 +84,14 @@
   document.documentElement.lang = lang;
   document.querySelectorAll("[data-en]").forEach((el) => (el.textContent = lang === "de" ? el.dataset.de : el.dataset.en));
   const rules = (window.AUFGUSS_DATA && window.AUFGUSS_DATA.RULES) || { waterPerM3: 30 };
+  const qid = new URLSearchParams(location.search).get("id"); if (qid && AufgussPlan.cabins().find((c) => c.id === qid)) AufgussPlan.setCurrent(qid);
+  const cab = document.getElementById("cab"), nameEl = document.getElementById("cabName");
+  function cabUI() { const cur = AufgussPlan.currentId(); cab.innerHTML = AufgussPlan.cabins().map((c) => `<option value="${c.id}" ${c.id === cur ? "selected" : ""}>${c.name.replace(/</g, "&lt;")}</option>`).join(""); nameEl.value = AufgussPlan.cabins().find((c) => c.id === cur).name; }
+  cabUI();
+  cab.onchange = () => { AufgussPlan.setCurrent(cab.value); location.search = "?id=" + cab.value; };
+  nameEl.onchange = () => { AufgussPlan.renameCabin(AufgussPlan.currentId(), nameEl.value.trim() || "Sauna"); cabUI(); };
+  document.getElementById("cabNew").onclick = () => { const c = AufgussPlan.addCabin((lang === "de" ? "Sauna " : "Sauna ") + (AufgussPlan.cabins().length + 1)); location.search = "?id=" + c.id; };
+  document.getElementById("cabDel").onclick = () => { if (AufgussPlan.cabins().length < 2) return; if (!confirm(lang === "de" ? "Diese Sauna löschen?" : "Delete this sauna?")) return; AufgussPlan.removeCabin(AufgussPlan.currentId()); location.search = ""; };
   let s3 = null, timer = 0;
   const ed = AufgussPlan.editor(document.getElementById("editor"), { lang, waterPerM3: rules.waterPerM3, onChange(plan) { clearTimeout(timer); timer = setTimeout(() => s3 && s3.rebuild(JSON.parse(JSON.stringify(plan))), 400); } });
   s3 = AufgussSauna3D.mount(document.getElementById("s3"), lang);

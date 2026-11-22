@@ -28,7 +28,11 @@
   .lang button, .filters button, nav.tabs button, .controls button { min-height: var(--tap); min-width: var(--tap); border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 999px; padding: 0 12px; font: inherit; font-size: .95rem; cursor: pointer; }
   [aria-pressed="true"], [aria-selected="true"] { background: var(--accent) !important; color: #fff !important; border-color: var(--accent) !important; }
   nav.tabs { display: flex; gap: 6px; padding: 6px 16px 10px; position: sticky; top: 0; background: var(--bg); z-index: 2; }
-  nav.tabs button { flex: 1; }
+  nav.tabs { overflow-x: auto; }
+  nav.tabs button { flex: 1 0 auto; padding: 0 9px; font-size: .86rem; }
+  .cab { display: grid; gap: 4px; padding: 10px; border: 1px solid var(--line); border-radius: 12px; margin: 8px 0; }
+  .cab[aria-current="true"] { border-color: var(--wood); border-width: 2px; }
+  .cab .controls { margin: 4px 0 0; }
   main { padding: 0 12px 40px; max-width: 720px; margin: 0 auto; }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); padding: 14px; margin: 0 0 14px; }
   h2 { font-size: 1.15rem; margin: 4px 0 10px; } h2 small { font-weight: 400; color: var(--muted); font-size: .85rem; display: block; }
@@ -115,18 +119,22 @@
     <div><h1>Aufguss Studio</h1><p id="tagline"></p></div>
     <div class="lang" role="group" aria-label="Language / Sprache">
       <button data-lang="en">EN</button><button data-lang="de">DE</button>
+      <button data-about aria-label="About">ⓘ</button>
     </div>
   </header>
   <nav class="tabs" role="tablist">
-    <button role="tab" data-tab="Design" data-view="design" aria-selected="true"></button>
+    <button role="tab" data-tab="Me" data-view="me" aria-selected="true"></button>
     <button role="tab" data-tab="Tech" data-view="library" aria-selected="false"></button>
     <button role="tab" data-tab="Phys" data-view="physics" aria-selected="false"></button>
-    <button role="tab" data-tab="About" data-view="about" aria-selected="false"></button>
+    <button role="tab" data-tab="Saunas" data-view="saunas" aria-selected="false"></button>
+    <button role="tab" data-tab="Design" data-view="design" aria-selected="false"></button>
   </nav>
   <main>
-    <section class="view" id="design"></section>
+    <section class="view" id="me"></section>
     <section class="view" id="library" hidden></section>
     <section class="view" id="physics" hidden></section>
+    <section class="view" id="saunas" hidden></section>
+    <section class="view" id="design" hidden></section>
     <section class="view" id="about" hidden></section>
   </main>
   <dialog id="sheet" aria-label="Technique"></dialog>
@@ -137,6 +145,7 @@
   <script src="clip.js"></script>
   <script src="profile.js"></script>
   <script src="physics.js"></script>
+  <script src="plan.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

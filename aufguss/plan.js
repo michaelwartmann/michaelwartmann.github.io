@@ -9,11 +9,34 @@
   const DEF = () => ({ pts: [[0, 0, 0], [3, 0, 0], [3, 3, 1], [0, 3, 0]], oven: [0.5, 0.5], h: 2.4, rows: 3, kw: 9, topH: 1.2, v: 2 });
   // pts[i] = [x, y, bench] — bench = 1 if the wall from corner i to corner i+1 carries benches
 
-  function load() {
-    try { const p = JSON.parse(localStorage.getItem(KEY)); if (p && p.v === 2 && p.pts && p.pts.length >= 3) return p; } catch (e) {}
-    return DEF();
+  // Several saunas (one spa can have four infusion cabins). All on the phone:
+  // aufguss.saunas = [{ id, name, plan }], aufguss.sauna.cur = id of the one being edited / used.
+  const LIST = "aufguss.saunas", CUR = "aufguss.sauna.cur";
+  const get = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch (e) { return d; } };
+  const put = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+  function cabins() {
+    let L = get(LIST, null);
+    if (!L || !L.length) { // first time: take the old single plan if there is one
+      let old = get(KEY, null); if (!(old && old.v === 2 && old.pts && old.pts.length >= 3)) old = DEF();
+      const de = (navigator.language || "").startsWith("de") || get("aufguss.lang", "") === "de";
+      L = [{ id: "s" + Date.now().toString(36), name: de ? "Meine Sauna" : "My sauna", plan: old }]; put(LIST, L); put(CUR, L[0].id);
+    }
+    return L;
   }
-  function save(p) { try { localStorage.setItem(KEY, JSON.stringify(p)); } catch (e) {} }
+  function currentId() { const L = cabins(), c = get(CUR, null); return L.find((x) => x.id === c) ? c : L[0].id; }
+  function setCurrent(id) { put(CUR, id); }
+  function addCabin(name) { const L = cabins(), c = { id: "s" + Date.now().toString(36), name, plan: DEF() }; L.push(c); put(LIST, L); put(CUR, c.id); return c; }
+  function renameCabin(id, name) { const L = cabins(), c = L.find((x) => x.id === id); if (c) { c.name = name; put(LIST, L); } }
+  function removeCabin(id) { let L = cabins().filter((x) => x.id !== id); put(LIST, L); if (!L.length) cabins(); put(CUR, cabins()[0].id); }
+  function load(id) { const L = cabins(), c = L.find((x) => x.id === (id || currentId())) || L[0]; return c.plan; }
+  function save(p, id) { const L = cabins(), c = L.find((x) => x.id === (id || currentId())); if (c) { c.plan = p; put(LIST, L); } }
+  // what the infusion planner needs to know about a cabin
+  function stats(plan) {
+    const A = Math.abs(area(plan.pts)), V = A * plan.h, S = seats(plan), B = benches(plan), top = B.length ? Math.max(...B.map((b) => b.h)) : 0.9;
+    const clear = plan.h - (top + 0.05 + 0.9), o = plan.oven || plan.pts[0];
+    const reach = S.length ? Math.max(...S.map((s) => Math.hypot(s.x - o[0], s.y - o[1]))) : 2;
+    return { area: A, volume: V, seats: S.length, clear, reach, top };
+  }
 
   // ---------- geometry ----------
   const area = (P) => { let a = 0; for (let i = 0; i < P.length; i++) { const p = P[i], q = P[(i + 1) % P.length]; a += p[0] * q[1] - q[0] * p[1]; } return a / 2; };
@@ -298,5 +321,5 @@
     return { get plan() { return plan; }, redraw: draw, stop() { root.removeEventListener("resize", onR); } };
   }
 
-  root.AufgussPlan = { editor, load, save, benches, seats, inside, area, inward, ROW_H, ROW_D, crosses, sharpen };
+  root.AufgussPlan = { editor, load, save, cabins, currentId, setCurrent, addCabin, renameCabin, removeCabin, stats, benches, seats, inside, area, inward, ROW_H, ROW_D, crosses, sharpen };
 })(typeof window !== "undefined" ? window : globalThis);
