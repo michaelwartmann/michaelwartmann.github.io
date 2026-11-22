@@ -1255,8 +1255,8 @@ window.AUFGUSS_TECHNIQUES = [
       "Pettine"
     ],
     "desc": {
-      "en": "Towel held flat and wide open, its upper edge at the middle of your body, then pushed quickly upwards towards the guests. Brings the cooler air near the floor up and mixes it.",
-      "de": "Tuch waagerecht und weit offen, die Oberkante auf Höhe der Körpermitte, dann schnell nach oben zu den Gästen geschoben. Holt die kühlere Luft vom Boden nach oben und mischt sie."
+      "en": "Both hands on the top corners. Gather the towel at the chest, then snap the hands apart so it bursts open and throws a puff of air: low in front for the bottom benches, flung up over the head for the top benches. Variant: swing it beside you.",
+      "de": "Beide Hände an den oberen Ecken. Das Tuch vor der Brust sammeln, dann die Hände schnell auseinanderziehen, sodass es aufplatzt und einen Luftstoß wirft: tief vorne für die unteren Bänke, über den Kopf geschleudert für die oberen. Variante: neben dir schwingen."
     },
     "use": {
       "en": "Evens out the temperature. Not at the start of a round: it can't carry the rising scented steam.",
@@ -1274,7 +1274,14 @@ window.AUFGUSS_TECHNIQUES = [
         "url": "https://www.youtube.com/watch?v=pzGbE27Oh9s",
         "title": "Aufguss.it 3 – Comb"
       }
-    ]
+    ],
+    "clip": {
+      "id": "pzGbE27Oh9s",
+      "start": 30.8,
+      "end": 32.8,
+      "credit": "Aufguss.it",
+      "check": true
+    }
   },
   {
     "no": 5,
