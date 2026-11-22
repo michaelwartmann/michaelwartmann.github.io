@@ -16,7 +16,9 @@
   function lerp(a, b, t) { return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; }
   function smooth(t) { return t * t * (3 - 2 * t); }
 
-  const SHOULDER_R = v(0.2, 1.45, 0), SHOULDER_L = v(-0.2, 1.45, 0);
+  const SHOULDER_R = v(0.13, 1.45, 0), SHOULDER_L = v(-0.13, 1.45, 0);
+  const ENGINE_U = 28 / 0.3, REACH = (28 + 26 - 0.5) / ENGINE_U; // mascot arm: 0.30 + 0.28 m
+  function reach(sh, p) { if (!p) return p; const d = sub(p, sh), l = len(d); return l > REACH ? add(sh, mul(d, REACH / l)) : p; }
   const REST_R = v(0.28, 0.95, 0.05), REST_L = v(-0.28, 0.95, 0.05);
 
   // ---------- Cloth ----------
@@ -112,13 +114,17 @@
           grip: "corner",
           hands(t, w) { const a = w * t; const R = v(0.35 + 0.25 * Math.cos(a), 1.55 + 0.4 * Math.sin(a), 0.15); return { R, L: v(-R[0], R[1], R[2]) }; },
         };
-        const amp = (demo.speed < 0.6 ? 0.28 : 0.45) * (demo.big ? 1.2 : 1);
+        // Side flag, as in the Aufguss.it tutorial: both hands on the same long edge, the top hand over the head,
+        // the bottom hand at the hip. Each hand reaches far on its own side and only to the middle on the other.
+        // The towel faces the guests at each end and turns edge-on as it reverses.
+        const big = demo.big ? 1.2 : 1;
         return {
           grip: "vertical",
           hands(t, w) {
-            const x = amp * Math.sin(w * t);
-            const z = 0.3 + 0.08 * Math.cos(w * t);
-            return { R: v(x + 0.05, 1.95, z), L: v(x - 0.05, 1.1, z + 0.05) };
+            const s = Math.sin(w * t), c = Math.cos(w * t);
+            const top = v((0.3 + 0.17 * s) * big, 1.95 + 0.06 * (1 - s * s), 0.18 + 0.06 * c);
+            const low = v((-0.12 + 0.4 * s) * big, 1.0 + 0.05 * (1 - s * s), 0.3 + 0.06 * c);
+            return { R: top, L: low };
           },
         };
       }
@@ -251,6 +257,18 @@
       this.cloths.forEach((cl, n) => { if (cl) this.placeCloth(cl, n === 0 ? h.R : (h.L || h.R)); });
       for (let i = 0; i < 90; i++) this.tick(1 / 60);
     }
+    // mascots have big heads: keep paws (and the towel corners they hold) out of the face
+    clear(p) { // in the drawn (pitched) view, so what you see is what is cleared
+      if (!p || !this.figure || !root.PoseEngine) return p;
+      const HR = root.PoseEngine.STYLES.cat.head, U = ENGINE_U, cp = Math.cos(0.32), sp = Math.sin(0.32);
+      const hx = 0, hy = (root.PoseEngine.SEG.neck + HR) / U, r = (HR + 8) / U;
+      const px = p[0], py = (p[1] - SHOULDER_R[1]) * cp - p[2] * sp;
+      const dx = px - hx, dy = py - hy, d = Math.hypot(dx, dy);
+      if (d >= r) return p;
+      const ux = d < 1e-3 ? Math.sign(p[0] || 1) : dx / d, uy = d < 1e-3 ? 0 : dy / d;
+      const nx = hx + ux * r, ny = hy + uy * r;
+      return v(nx, SHOULDER_R[1] + (ny + p[2] * sp) / cp, p[2]);
+    }
     omega() { return TAU * (this.demo.speed || 1) * this.tempo; }
     placeCloth(cl, hand) {
       cl.place((i) => {
@@ -300,6 +318,7 @@
           }
           this.lastCatch = h.R;
         }
+        if (!h.armR) h = Object.assign({}, h, { R: this.clear(reach(SHOULDER_R, h.R)), L: this.clear(reach(SHOULDER_L, h.L)) });
         this.hands = h;
         this.cloths.forEach((cl, n) => {
           if (!cl) return;
@@ -350,50 +369,65 @@
       this.bctx = this.back.getContext("2d"); this.wrap = wrap;
     }
     drawAnimal() {
+      // One mapping for everything: world metres → engine units (U per metre, shoulders at engine y=50, hip at 0).
+      // The arms are solved with inverse kinematics so both paws sit exactly where the hands hold the towel.
       const E = root.PoseEngine, C = this.colors, h = this.hands || this.motion.hands(this.time, this.omega());
       const dpr = Math.min(2, root.devicePixelRatio || 1), W = this.W, H = this.H;
       if (this.back.width !== Math.round(W * dpr)) { this.back.width = Math.round(W * dpr); this.back.height = Math.round(H * dpr); this.bctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
-      const armR = h.armR || this.arm(SHOULDER_R, h.R), armL = h.armL || this.arm(SHOULDER_L, h.L);
-      const ang = (a, b) => Math.atan2(b[1] - a[1], b[0] - a[0]) * 180 / Math.PI;
-      // big mascot heads: open the elbows a little when the hands are high, so the paws pass above the head, not across the face
-      const open = (a, out) => { const up = Math.max(0, Math.sin(a * Math.PI / 180)); return a + out * 22 * up; };
-      const uN = open(ang(armR[0], armR[1]), -1), uF = open(ang(armL[0], armL[1]), 1);
-      const fN = ang(armR[1], armR[2]), fF = ang(armL[1], armL[2]);
-      const pose = { view: "front", aN: [uN, fN + (fN > 0 && fN < 180 ? 12 : 0)], aF: [uF, fF - (fF > 0 && fF < 180 ? 12 : 0)], lN: [-90, -90, 0], lF: [-90, -90, 180] };
-      this.svgEl.innerHTML = E.svgInner(pose, { style: "cat", animal: this.figure });
-      // where the engine drew the paws (same placement maths as svgInner)
-      const J = E.compute(pose, { head: E.STYLES.cat.head });
-      const pts = [J.hip, J.sh, ...J.armN, ...J.armF, ...J.legN, ...J.legF], HR = E.STYLES.cat.head;
-      const xs = pts.map((p) => p.x).concat([J.head.x - HR, J.head.x + HR]);
-      const cx = E.VB.w / 2 - (Math.min(...xs) + Math.max(...xs)) / 2;
-      const toSvg = (p) => [p.x + cx, E.VB.floor - p.y];
-      const pawN = toSvg(J.armN[2]), pawF = toSvg(J.armF[2]);
+      const U = ENGINE_U, pitch = 0.32, cp = Math.cos(pitch), sp = Math.sin(pitch);
+      const M = (p) => ({ x: p[0] * U, y: 50 + ((p[1] - SHOULDER_R[1]) * cp - p[2] * sp) * U });
+      const a = E.SEG.upper, b = E.SEG.fore, deg = (r) => r * 180 / Math.PI;
+      const ik = (S, T, side) => { // side +1 = right arm: elbow goes outwards (to +x) and down
+        let dx = T.x - S.x, dy = T.y - S.y, d = Math.hypot(dx, dy);
+        const dm = a + b - 0.5; if (d > dm) { dx *= dm / d; dy *= dm / d; d = dm; } if (d < 4) d = 4;
+        const th = Math.atan2(dy, dx), al = Math.acos(Math.max(-1, Math.min(1, (a * a + d * d - b * b) / (2 * a * d))));
+        const cand = [th + al, th - al].map((u) => ({ u, ex: S.x + Math.cos(u) * a, ey: S.y + Math.sin(u) * a }));
+        const e = cand.sort((p, q) => (side * q.ex - q.ey * 0.3) - (side * p.ex - p.ey * 0.3))[0];
+        return [deg(e.u), deg(Math.atan2(S.y + dy - e.ey, S.x + dx - e.ex))];
+      };
+      const handR = h.R || REST_R, handL = h.L || (h.sameTowel ? add(h.R, v(-0.1, -0.02, 0)) : (h.armR ? add(h.R, v(-0.08, -0.03, 0)) : REST_L));
+      // the body leans a little into the swing (weight over the side where the hands are), knees soften
+      const side = Math.max(-1, Math.min(1, ((handR[0] + handL[0]) / 2) / 0.35));
+      this.lean = (this.lean ?? 0) * 0.85 + side * 0.15;
+      const tAng = 90 - 6 * this.lean, perp = (tAng - 90) * Math.PI / 180, shc = { x: Math.cos(tAng * Math.PI / 180) * 50, y: Math.sin(tAng * Math.PI / 180) * 50 };
+      const SN = { x: shc.x + Math.cos(perp) * 12, y: shc.y + Math.sin(perp) * 12 }, SF = { x: shc.x - Math.cos(perp) * 12, y: shc.y - Math.sin(perp) * 12 };
+      const kn = 4 * Math.abs(this.lean);
+      const pose = { view: "front", t: tAng, aN: ik(SN, M(handR), 1), aF: ik(SF, M(handL), -1), lN: [-90 + 3 * this.lean - kn, -90 + kn, 0], lF: [-90 + 3 * this.lean + kn, -90 - kn, 180] };
+      // keep the body still: cancel the engine's re-centring, which depends on where the arms are
+      const J = E.compute(pose, { head: E.STYLES.cat.head }), HR = E.STYLES.cat.head;
+      const xs = [J.hip, J.sh, ...J.armN, ...J.armF, ...J.legN, ...J.legF].map((p) => p.x).concat([J.head.x - HR, J.head.x + HR]);
+      const cx = E.VB.w / 2 - (Math.min(...xs) + Math.max(...xs)) / 2, dyF = J.hip.y; // compute() lifted everything by dyF
+      const cx0 = E.VB.w / 2;
+      this.svgEl.innerHTML = `<g transform="translate(${(cx0 - cx).toFixed(2)} 0)">${E.svgInner(pose, { style: "cat", animal: this.figure })}</g>`;
       const VX = -30, VY = -50, VW = 320, VH = 280, k = Math.min(W / VW, H / VH), ox = (W - VW * k) / 2 - VX * k, oy = (H - VH * k) / 2 - VY * k;
-      const U = E.SEG.upper / 0.3, pitch = 0.32, cp = Math.cos(pitch), sp = Math.sin(pitch);
+      const P = (p) => { const m = M(p); return [ox + (m.x + cx0) * k, oy + (E.VB.floor - (m.y + dyF)) * k, p[2]]; };
       const front = this.ctx, back = this.bctx;
       front.clearRect(0, 0, W, H); back.clearRect(0, 0, W, H);
+      const behind = (z) => z < -0.06;
       this.cloths.forEach((cl, n) => {
         if (!cl || (n === 1 && !h.L)) return;
-        const anchor = n === 0 ? h.R : h.L;
-        const paw = n === 1 ? pawF : (h.armR && !h.L ? [(pawN[0] + pawF[0]) / 2, (pawN[1] + pawF[1]) / 2] : pawN);
-        const P = (p) => { const dx = p[0] - anchor[0], dy = (p[1] - anchor[1]) * cp - (p[2] - anchor[2]) * sp;
-          return [ox + (paw[0] + dx * U) * k, oy + (paw[1] - dy * U) * k, p[2]]; };
         const quads = [];
         for (let r = 0; r < cl.rows - 1; r++) for (let c = 0; c < cl.cols - 1; c++) {
-          const a = cl.p[cl.idx(c, r)], b = cl.p[cl.idx(c + 1, r)], d = cl.p[cl.idx(c + 1, r + 1)], e = cl.p[cl.idx(c, r + 1)];
-          const nrm = cross(sub(b, a), sub(e, a)), shade = Math.abs(nrm[2]) / (len(nrm) || 1);
-          const Q = [a, b, d, e].map(P), z = (a[2] + d[2]) / 2;
-          quads.push({ Q, z, shade, layer: z < anchor[2] - 0.04 ? back : front });
+          const A = cl.p[cl.idx(c, r)], B = cl.p[cl.idx(c + 1, r)], D = cl.p[cl.idx(c + 1, r + 1)], F = cl.p[cl.idx(c, r + 1)];
+          const nrm = cross(sub(B, A), sub(F, A)), shade = Math.abs(nrm[2]) / (len(nrm) || 1);
+          const z = (A[2] + D[2]) / 2;
+          quads.push({ Q: [A, B, D, F].map(P), z, shade, layer: behind(z) ? back : front });
         }
         quads.sort((p, q) => p.z - q.z).forEach(({ Q, shade, layer }) => {
-          layer.fillStyle = shadeColor(C.towel, 0.8 + 0.2 * shade); layer.strokeStyle = layer.fillStyle; layer.lineWidth = 1.2; layer.lineJoin = "round";
+          layer.fillStyle = shadeColor(C.towel, 0.78 + 0.22 * shade); layer.strokeStyle = layer.fillStyle; layer.lineWidth = 1.2; layer.lineJoin = "round";
           layer.beginPath(); layer.moveTo(Q[0][0], Q[0][1]); for (let i = 1; i < 4; i++) layer.lineTo(Q[i][0], Q[i][1]); layer.closePath(); layer.fill(); layer.stroke();
         });
-        // hem: the stitched edge along the far end of the towel
-        const hem = []; for (let c = 0; c < cl.cols; c++) hem.push(P(cl.p[cl.idx(c, cl.rows - 1)]));
-        const hz = cl.p[cl.idx(0, cl.rows - 1)][2], hl = hz < anchor[2] - 0.04 ? back : front;
+        // hem along the free edge
+        const free = this.motion.grip === "vertical" ? Array.from({ length: cl.rows }, (_, r) => cl.idx(cl.cols - 1, r)) : Array.from({ length: cl.cols }, (_, c) => cl.idx(c, cl.rows - 1));
+        const hem = free.map((i) => P(cl.p[i])), hz = cl.p[free[0]][2], hl = behind(hz) ? back : front;
         hl.strokeStyle = C.edge; hl.lineWidth = 2.2; hl.lineCap = "round"; hl.beginPath(); hem.forEach((q, i) => (i ? hl.lineTo(q[0], q[1]) : hl.moveTo(q[0], q[1]))); hl.stroke();
       });
+      if (this.motion.grip === "fan" && h.R) { // a sauna fan in the paw
+        const q = P(h.R), R = 0.3 * U * k, ang = -Math.PI / 2 + 0.6 * Math.sin(this.omega() * this.time);
+        front.fillStyle = C.edge; front.strokeStyle = shadeColor(C.towel, 0.6); front.lineWidth = 1;
+        front.beginPath(); front.moveTo(q[0], q[1]); front.arc(q[0], q[1], R, ang - 0.8, ang + 0.8); front.closePath(); front.fill();
+        for (let i = -3; i <= 3; i++) { const u = ang + i * 0.25; front.beginPath(); front.moveTo(q[0], q[1]); front.lineTo(q[0] + Math.cos(u) * R, q[1] + Math.sin(u) * R); front.stroke(); }
+      }
     }
     draw() {
       if (this.figure) return this.drawAnimal();
