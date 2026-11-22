@@ -65,6 +65,15 @@
   label.cando { display: flex; align-items: center; gap: 8px; color: var(--ink); min-height: var(--tap); margin: 0; }
   label.cando input { width: 24px; height: 24px; accent-color: var(--accent); }
   dialog#sheet { border: 0; padding: 0; width: min(680px, 100vw); max-height: 92vh; border-radius: 18px 18px 0 0; margin: auto auto 0; background: var(--card); color: var(--ink); }
+  .physcv, .plancv { display: block; width: 100%; border-radius: 12px; touch-action: none; background: #222; }
+  .plancv { background: var(--card); border: 1px solid var(--line); }
+  .guests { display: grid; gap: 8px; margin-top: 8px; }
+  .guest { display: grid; gap: 2px; font-size: .92rem; padding: 8px; border: 1px solid var(--line); border-radius: 10px; }
+  .guest em { color: var(--ember); font-style: normal; font-weight: 700; }
+  .guest .bar { display: flex; height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+  .bar .c, .sw.c { background: #e8783a; } .bar .l, .sw.l { background: #6fb7d6; }
+  .sw { display: inline-block; width: 12px; height: 12px; border-radius: 3px; vertical-align: middle; }
+  .phys-list li { margin: 6px 0; }
   .labbtn { display: inline-flex; align-items: center; min-height: 44px; padding: 0 14px; border-radius: 999px; background: var(--wood); color: #fff; font-weight: 700; text-decoration: none; }
   button.primary { background: var(--wood); color: #fff; border: 0; border-radius: 12px; padding: 12px 16px; font-weight: 700; min-height: 44px; }
   .me { display: grid; grid-template-columns: 96px 1fr; gap: 12px; align-items: center; }
@@ -111,11 +120,13 @@
   <nav class="tabs" role="tablist">
     <button role="tab" data-tab="Design" data-view="design" aria-selected="true"></button>
     <button role="tab" data-tab="Tech" data-view="library" aria-selected="false"></button>
+    <button role="tab" data-tab="Phys" data-view="physics" aria-selected="false"></button>
     <button role="tab" data-tab="About" data-view="about" aria-selected="false"></button>
   </nav>
   <main>
     <section class="view" id="design"></section>
     <section class="view" id="library" hidden></section>
+    <section class="view" id="physics" hidden></section>
     <section class="view" id="about" hidden></section>
   </main>
   <dialog id="sheet" aria-label="Technique"></dialog>
@@ -125,6 +136,7 @@
   <script src="demo.js"></script>
   <script src="clip.js"></script>
   <script src="profile.js"></script>
+  <script src="physics.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

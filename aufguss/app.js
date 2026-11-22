@@ -8,7 +8,7 @@
   const T = {
     en: {
       tagline: "Design your sauna infusion, round by round.",
-      tabDesign: "Design", tabTech: "Techniques", tabAbout: "About",
+      tabDesign: "Design", tabTech: "Techniques", tabPhys: "Physics", tabAbout: "About",
       setup: "Your infusion", minutes: "Length", min: "min", temp: "Sauna temperature", seats: "Guests who fit", clearance: "Heads on the top bench to the ceiling", clTight: "under 20 cm", clNormal: "20–40 cm", clRoomy: "more than 40 cm", reach: "Farthest guest from the oven", rNear: "under 2 m", rMid: "2–4 m", rFar: "more than 4 m", extras: "Extras", estimate: "estimate", watchTop: "Watch the top bench: if people bend forward or look pale and dizzy, ease off; dizzy guests go to a lower bench or lie down.", tightTxt: "Heads are close to the ceiling, in the hottest layer: a little less water, spread fast.", farTxt: "Far guests: the steam needs longer, keep distributing towards the back rows.", extraTxt: "Hand out: ",
       level: "Your level", lv1: "Beginner", lv2: "Intermediate", lv3: "Advanced",
       style: "Style", rounds: "Rounds", auto: "auto", theme: "Theme (optional)", themePh: "e.g. Forest morning, Ice palace",
@@ -56,7 +56,7 @@
     },
     de: {
       tagline: "Gestalte deinen Saunaaufguss, Runde für Runde.",
-      tabDesign: "Gestalten", tabTech: "Techniken", tabAbout: "Über",
+      tabDesign: "Gestalten", tabTech: "Techniken", tabPhys: "Physik", tabAbout: "Über",
       setup: "Dein Aufguss", minutes: "Dauer", min: "Min.", temp: "Saunatemperatur", seats: "Gäste, die Platz haben", clearance: "Köpfe auf der oberen Bank bis zur Decke", clTight: "unter 20 cm", clNormal: "20–40 cm", clRoomy: "mehr als 40 cm", reach: "Fernster Gast vom Ofen", rNear: "unter 2 m", rMid: "2–4 m", rFar: "mehr als 4 m", extras: "Extras", estimate: "geschätzt", watchTop: "Die obere Bank beobachten: Wenn sich Leute nach vorn beugen oder blass und schwindlig wirken, zurücknehmen; Schwindlige setzen sich tiefer oder legen sich hin.", tightTxt: "Die Köpfe sind nah an der Decke, in der heißesten Schicht: etwas weniger Wasser, schnell verteilen.", farTxt: "Ferne Gäste: Der Dampf braucht länger, weiter zu den hinteren Reihen verteilen.", extraTxt: "Reichen: ",
       level: "Dein Level", lv1: "Einsteiger", lv2: "Fortgeschritten", lv3: "Profi",
       style: "Stil", rounds: "Runden", auto: "auto", theme: "Thema (optional)", themePh: "z. B. Waldmorgen, Eispalast",
@@ -121,7 +121,8 @@
   let plan = null;
   let libFilter = "all";
   const PR = window.AufgussProfile;
-  let me = store.get("me", null); // { animal, level, heat, care, scent, answers }
+  let me = store.get("me", null);
+  let phys = null; // physics view, mounted on first visit // { animal, level, heat, care, scent, answers }
 
   const t = (k) => T[lang][k];
   const nm = (o) => (o && (o[lang] || o.en)) || "";
@@ -222,6 +223,7 @@
     document.querySelectorAll("[data-tab]").forEach((b) => (b.textContent = t("tab" + b.dataset.tab)));
     document.querySelectorAll(".lang button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.lang === lang));
     renderDesign(); renderLibrary(); renderAbout();
+    if (phys) { phys.stop(); phys = window.AufgussPhysics.mount($("#physics"), lang, RULES); if ($("#physics").hidden) phys.pause(); }
   }
 
   function opt(list, val) { return list.map((o) => `<option value="${o.id}" ${o.id === val ? "selected" : ""}>${esc(nm(o))}</option>`).join(""); }
@@ -473,6 +475,8 @@
     if (b.dataset.tab) {
       document.querySelectorAll("[data-tab]").forEach((x) => x.setAttribute("aria-selected", x === b));
       document.querySelectorAll("main > section.view").forEach((s) => (s.hidden = s.id !== b.dataset.view));
+      if (b.dataset.view === "physics") { if (!phys && window.AufgussPhysics) phys = window.AufgussPhysics.mount($("#physics"), lang, RULES); else if (phys) phys.resume(); }
+      else if (phys) phys.pause();
     } else if (b.dataset.lang) { lang = b.dataset.lang; store.set("lang", lang); render(); }
     else if (b.dataset.open) openTech(b.dataset.open);
     else if (b.dataset.quiz !== undefined) openQuiz();
