@@ -77,6 +77,9 @@
   .clipbtn { min-height: var(--tap); border-radius: 999px; border: 1px solid var(--wood); background: var(--card); color: var(--ink); font: inherit; padding: 0 14px; cursor: pointer; margin-top: 8px; }
   .cliphost { aspect-ratio: 16/9; background: #000; border-radius: 12px; overflow: hidden; margin-top: 8px; }
   .cliphost:empty { display: none; }
+  .figpick { display: flex; align-items: center; gap: 8px; color: var(--ink); margin: 6px 0; }
+  .figpick select { width: auto; }
+  .figwrap canvas#demoCanvas { margin: 0; }
   .k-note { border-left: 3px solid var(--cool); padding-left: 8px; color: var(--muted); }
   .k-music { color: var(--muted); }
   .code { font-variant-numeric: tabular-nums; font-weight: 800; color: var(--accent); margin-right: 2px; }
@@ -104,6 +107,7 @@
   <dialog id="sheet" aria-label="Technique"></dialog>
   <script src="techniques.js"></script>
   <script src="data.js"></script>
+  <script src="pose-engine.js"></script>
   <script src="demo.js"></script>
   <script src="clip.js"></script>
   <script src="app.js"></script>

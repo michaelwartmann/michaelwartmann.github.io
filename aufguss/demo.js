@@ -35,8 +35,8 @@
         if (c < cols - 1) link(idx(c, r), idx(c + 1, r));
         if (r < rows - 1) link(idx(c, r), idx(c, r + 1));
         if (c < cols - 1 && r < rows - 1) { link(idx(c, r), idx(c + 1, r + 1)); link(idx(c + 1, r), idx(c, r + 1)); }
-        if (c < cols - 2) link(idx(c, r), idx(c + 2, r), 0.12);  // soft bending: keeps it from crumpling into a string
-        if (r < rows - 2) link(idx(c, r), idx(c, r + 2), 0.12);
+        if (c < cols - 2) link(idx(c, r), idx(c + 2, r), 0.35);  // bending: terry folded double is fairly stiff
+        if (r < rows - 2) link(idx(c, r), idx(c, r + 2), 0.35);
       }
     }
     place(fn) { // put every point somewhere sensible before the first frame
@@ -222,6 +222,8 @@
       this.t = technique; this.demo = technique.demo || { kind: "rotate" };
       this.tempo = 1; this.time = 0; this.running = false;
       this.colors = opts.colors || { body: "#3b2a20", towel: "#f4efe6", edge: "#b98a5c", line: "#d9c7b3" };
+      this.figure = opts.figure && opts.figure !== "stick" && root.PoseEngine ? opts.figure : null;
+      if (this.figure) this.setupLayers();
       this.build();
       this.resize();
       this._onResize = () => this.resize();
@@ -235,11 +237,11 @@
       const count = d.twoTowels && grip !== "spread" && grip !== "vertical" ? 2 : 1;
       for (let n = 0; n < count; n++) {
         let cloth;
-        if (grip === "corner") cloth = new Cloth(3, 9, 0.22 * (d.big ? 1.3 : 1), 0.8 * (d.big ? 1.4 : 1) * (d.twoTowels ? 0.85 : 1)); // folded strip
+        if (grip === "corner") cloth = new Cloth(4, 12, 0.375 * (d.big ? 1.33 : 1), 1.0 * (d.big ? 1.5 : 1) * (d.twoTowels ? 0.8 : 1)); // waving towel 100×75 cm folded double (Saunagut WM towel ≈ 0.66 kg)
         else if (grip === "center") cloth = new Cloth(9, 9, 0.7, 0.7);
-        else if (grip === "vertical") cloth = new Cloth(7, 7, 0.75 * (d.big ? 1.3 : 1), 0.8);
+        else if (grip === "vertical") cloth = new Cloth(7, 8, 0.75 * (d.big ? 1.3 : 1), 1.0);
         else if (grip === "fan") cloth = null;
-        else cloth = new Cloth(8, 6, 0.6, 0.5); // spread
+        else cloth = new Cloth(8, 6, 0.75, 0.5); // open towel, top edge held
         this.cloths.push(cloth);
       }
       this.thrown = false; this.throwTimer = 0;
@@ -263,7 +265,7 @@
       const hand = n === 0 ? h.R : h.L;
       if (grip === "corner") {
         if (this.thrown && n === 0) return;
-        cl.pin.set(cl.idx(0, 0), hand); cl.pin.set(cl.idx(1, 0), add(hand, v(0.04, 0, 0))); cl.pin.set(cl.idx(2, 0), add(hand, v(0.08, 0, 0)));
+        cl.pin.set(cl.idx(0, 0), hand); cl.pin.set(cl.idx(1, 0), add(hand, v(0.07, 0, 0)));
       } else if (grip === "spread") {
         cl.pin.set(cl.idx(0, 0), h.L); cl.pin.set(cl.idx(cl.cols - 1, 0), h.R);
       } else if (grip === "vertical") {
@@ -303,7 +305,7 @@
           if (!cl) return;
           if (n === 1 && !h.L) return;
           this.pinCloth(cl, h, n);
-          cl.step(h_, 0.996);
+          cl.step(h_, 0.998);
         });
       }
     }
@@ -337,7 +339,64 @@
       const reach = add(shoulder, mul(dir, L));
       return [shoulder, elbow, reach];
     }
+    setupLayers() {
+      const c = this.canvas, wrap = document.createElement("div");
+      wrap.className = "figwrap"; wrap.style.cssText = "position:relative;width:100%;height:" + (c.clientHeight || 300) + "px";
+      c.parentNode.insertBefore(wrap, c);
+      this.back = document.createElement("canvas"); this.svgEl = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      this.svgEl.setAttribute("viewBox", "-30 -50 320 280"); // extra room above the head for the flying towel this.svgEl.setAttribute("aria-hidden", "true");
+      for (const el of [this.back, this.svgEl, c]) { el.style.position = "absolute"; el.style.inset = "0"; el.style.width = "100%"; el.style.height = "100%"; wrap.appendChild(el); }
+      c.style.background = "transparent"; this.back.className = c.className; wrap.style.background = getComputedStyle(c).backgroundColor; wrap.style.borderRadius = "12px"; wrap.style.margin = "8px 0";
+      this.bctx = this.back.getContext("2d"); this.wrap = wrap;
+    }
+    drawAnimal() {
+      const E = root.PoseEngine, C = this.colors, h = this.hands || this.motion.hands(this.time, this.omega());
+      const dpr = Math.min(2, root.devicePixelRatio || 1), W = this.W, H = this.H;
+      if (this.back.width !== Math.round(W * dpr)) { this.back.width = Math.round(W * dpr); this.back.height = Math.round(H * dpr); this.bctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
+      const armR = h.armR || this.arm(SHOULDER_R, h.R), armL = h.armL || this.arm(SHOULDER_L, h.L);
+      const ang = (a, b) => Math.atan2(b[1] - a[1], b[0] - a[0]) * 180 / Math.PI;
+      // big mascot heads: open the elbows a little when the hands are high, so the paws pass above the head, not across the face
+      const open = (a, out) => { const up = Math.max(0, Math.sin(a * Math.PI / 180)); return a + out * 22 * up; };
+      const uN = open(ang(armR[0], armR[1]), -1), uF = open(ang(armL[0], armL[1]), 1);
+      const fN = ang(armR[1], armR[2]), fF = ang(armL[1], armL[2]);
+      const pose = { view: "front", aN: [uN, fN + (fN > 0 && fN < 180 ? 12 : 0)], aF: [uF, fF - (fF > 0 && fF < 180 ? 12 : 0)], lN: [-90, -90, 0], lF: [-90, -90, 180] };
+      this.svgEl.innerHTML = E.svgInner(pose, { style: "cat", animal: this.figure });
+      // where the engine drew the paws (same placement maths as svgInner)
+      const J = E.compute(pose, { head: E.STYLES.cat.head });
+      const pts = [J.hip, J.sh, ...J.armN, ...J.armF, ...J.legN, ...J.legF], HR = E.STYLES.cat.head;
+      const xs = pts.map((p) => p.x).concat([J.head.x - HR, J.head.x + HR]);
+      const cx = E.VB.w / 2 - (Math.min(...xs) + Math.max(...xs)) / 2;
+      const toSvg = (p) => [p.x + cx, E.VB.floor - p.y];
+      const pawN = toSvg(J.armN[2]), pawF = toSvg(J.armF[2]);
+      const VX = -30, VY = -50, VW = 320, VH = 280, k = Math.min(W / VW, H / VH), ox = (W - VW * k) / 2 - VX * k, oy = (H - VH * k) / 2 - VY * k;
+      const U = E.SEG.upper / 0.3, pitch = 0.32, cp = Math.cos(pitch), sp = Math.sin(pitch);
+      const front = this.ctx, back = this.bctx;
+      front.clearRect(0, 0, W, H); back.clearRect(0, 0, W, H);
+      this.cloths.forEach((cl, n) => {
+        if (!cl || (n === 1 && !h.L)) return;
+        const anchor = n === 0 ? h.R : h.L;
+        const paw = n === 1 ? pawF : (h.armR && !h.L ? [(pawN[0] + pawF[0]) / 2, (pawN[1] + pawF[1]) / 2] : pawN);
+        const P = (p) => { const dx = p[0] - anchor[0], dy = (p[1] - anchor[1]) * cp - (p[2] - anchor[2]) * sp;
+          return [ox + (paw[0] + dx * U) * k, oy + (paw[1] - dy * U) * k, p[2]]; };
+        const quads = [];
+        for (let r = 0; r < cl.rows - 1; r++) for (let c = 0; c < cl.cols - 1; c++) {
+          const a = cl.p[cl.idx(c, r)], b = cl.p[cl.idx(c + 1, r)], d = cl.p[cl.idx(c + 1, r + 1)], e = cl.p[cl.idx(c, r + 1)];
+          const nrm = cross(sub(b, a), sub(e, a)), shade = Math.abs(nrm[2]) / (len(nrm) || 1);
+          const Q = [a, b, d, e].map(P), z = (a[2] + d[2]) / 2;
+          quads.push({ Q, z, shade, layer: z < anchor[2] - 0.04 ? back : front });
+        }
+        quads.sort((p, q) => p.z - q.z).forEach(({ Q, shade, layer }) => {
+          layer.fillStyle = shadeColor(C.towel, 0.8 + 0.2 * shade); layer.strokeStyle = layer.fillStyle; layer.lineWidth = 1.2; layer.lineJoin = "round";
+          layer.beginPath(); layer.moveTo(Q[0][0], Q[0][1]); for (let i = 1; i < 4; i++) layer.lineTo(Q[i][0], Q[i][1]); layer.closePath(); layer.fill(); layer.stroke();
+        });
+        // hem: the stitched edge along the far end of the towel
+        const hem = []; for (let c = 0; c < cl.cols; c++) hem.push(P(cl.p[cl.idx(c, cl.rows - 1)]));
+        const hz = cl.p[cl.idx(0, cl.rows - 1)][2], hl = hz < anchor[2] - 0.04 ? back : front;
+        hl.strokeStyle = C.edge; hl.lineWidth = 2.2; hl.lineCap = "round"; hl.beginPath(); hem.forEach((q, i) => (i ? hl.lineTo(q[0], q[1]) : hl.moveTo(q[0], q[1]))); hl.stroke();
+      });
+    }
     draw() {
+      if (this.figure) return this.drawAnimal();
       const ctx = this.ctx, C = this.colors;
       ctx.clearRect(0, 0, this.W, this.H);
       // floor, ceiling
@@ -360,8 +419,7 @@
           const nrm = cross(sub(b, a), sub(e, a));
           const shade = Math.abs(nrm[2]) / (len(nrm) || 1);
           items.push({ z: (P[0][2] + P[2][2]) / 2, draw: () => {
-            ctx.fillStyle = shadeColor(C.towel, 0.72 + 0.28 * shade);
-            ctx.strokeStyle = C.edge; ctx.lineWidth = 0.6;
+            ctx.fillStyle = shadeColor(C.towel, 0.78 + 0.22 * shade); ctx.strokeStyle = ctx.fillStyle; ctx.lineWidth = 1.2; ctx.lineJoin = "round";
             ctx.beginPath(); ctx.moveTo(P[0][0], P[0][1]); for (let i = 1; i < 4; i++) ctx.lineTo(P[i][0], P[i][1]); ctx.closePath(); ctx.fill(); ctx.stroke();
           } });
         }
@@ -408,7 +466,7 @@
       this.raf = requestAnimationFrame(loop);
     }
     pause() { this.running = false; cancelAnimationFrame(this.raf); }
-    destroy() { this.pause(); root.removeEventListener && root.removeEventListener("resize", this._onResize); }
+    destroy() { this.pause(); root.removeEventListener && root.removeEventListener("resize", this._onResize); if (this.wrap) { this.wrap.parentNode.insertBefore(this.canvas, this.wrap); this.wrap.remove(); } }
   }
 
   function sub3(a, b) { return sub(a, b); }

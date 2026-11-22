@@ -307,6 +307,9 @@
 
   // ---------- Technique sheet with demo ----------
   let demo = null;
+  let figure = store.get("figure", "bear");
+  const FIG = { bear: { en: "Bear", de: "Bär" }, cat: { en: "Cat", de: "Katze" }, panda: { en: "Panda", de: "Panda" }, fox: { en: "Fox", de: "Fuchs" },
+    otter: { en: "Otter", de: "Otter" }, tiger: { en: "Tiger", de: "Tiger" }, koala: { en: "Koala", de: "Koala" }, stick: { en: "Stick figure", de: "Strichmännchen" } };
   function openTech(id) {
     const x = byId[id]; if (!x) return;
     const dlg = $("#sheet");
@@ -316,6 +319,7 @@
       <p class="meta">${t("lv" + x.level)} · ${t("fam")[x.family]} · ${x.hands === 2 ? "2 ✋" : "1 ✋"}${x.towels === 2 ? " · 2 towels" : ""}${x.status === "named" ? " · " + t("toVerify") : ""}</p>
       ${x.clip ? `<button class="clipbtn" id="clipBtn">▶ ${lang === "de" ? "Clip ansehen" : "Watch clip"} · ${esc(x.clip.credit || "YouTube")}</button><div class="cliphost" id="clipHost"></div>` : ""}
       <canvas id="demoCanvas" role="img" aria-label="${esc(nm(x.name))}"></canvas>
+      <label class="figpick">${lang === "de" ? "Figur" : "Figure"} <select id="figSel">${["bear", "cat", "panda", "fox", "otter", "tiger", "koala", "penguin_x"].filter((f) => f === "cat" || (window.PoseEngine && window.PoseEngine.KITS[f])).concat(["stick"]).map((f) => `<option value="${f}" ${f === figure ? "selected" : ""}>${FIG[f] ? FIG[f][lang] : f}</option>`).join("")}</select></label>
       <div class="controls"><button id="playBtn">${reduce ? t("play") : t("pause")}</button>
         <label>${t("tempo")} <input id="tempo" type="range" min="0.25" max="1.5" step="0.05" value="1"></label></div>
       <p class="hint">${t("tempoHint")}</p>
@@ -327,11 +331,12 @@
     </div>`;
     dlg.showModal ? dlg.showModal() : dlg.setAttribute("open", "");
     const cs = getComputedStyle(document.documentElement);
-    demo = new window.TechniqueDemo($("#demoCanvas"), x, { colors: {
+    demo = new window.TechniqueDemo($("#demoCanvas"), x, { figure, colors: {
       body: cs.getPropertyValue("--ink").trim() || "#3b2a20", towel: "#f6f1e8", edge: cs.getPropertyValue("--wood").trim() || "#b98a5c", line: cs.getPropertyValue("--line").trim() || "#d9c7b3" } });
     if (!reduce) demo.play();
     $("#playBtn").onclick = () => { if (demo.running) { demo.pause(); $("#playBtn").textContent = t("play"); } else { demo.play(); $("#playBtn").textContent = t("pause"); } };
     $("#tempo").oninput = (e) => demo.setTempo(parseFloat(e.target.value));
+    $("#figSel").onchange = (e) => { figure = e.target.value; store.set("figure", figure); closeTech(); openTech(id); };
     if (x.clip) $("#clipBtn").onclick = () => {
       if (clipLoop) { clipLoop.stop(); clipLoop = null; return; }
       window.AufgussClip.loop($("#clipHost"), x.clip).then((h) => (clipLoop = h)).catch(() => { $("#clipHost").textContent = lang === "de" ? "Offline: Clip nicht verfügbar." : "Offline: clip not available."; });
