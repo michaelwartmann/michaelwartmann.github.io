@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aufguss Studio – Review</title>
+<meta name="robots" content="noindex">
+<style>
+  :root { --bg:#fbf6ef; --card:#fffdf9; --ink:#2f2119; --muted:#6e5a4c; --line:#e3d4c3; --accent:#7a3e1d; --ok:#2f6b3a; --todo:#b1461c;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#1d1612; --card:#271e18; --ink:#f3e9df; --muted:#c2ad9b; --line:#4a3a2e; --accent:#e8a477; --ok:#8fd19e; --todo:#ff9b73; } }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-size: 17px; line-height: 1.45; }
+  header { position: sticky; top: 0; z-index: 2; background: var(--bg); border-bottom: 1px solid var(--line); padding: 10px 16px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  header h1 { font-size: 1.2rem; margin: 0 12px 0 0; }
+  button { min-height: 40px; border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 999px; padding: 0 12px; font: inherit; font-size: .92rem; cursor: pointer; }
+  [aria-pressed="true"] { background: var(--accent); color: #fff; border-color: var(--accent); }
+  main { max-width: 1100px; margin: 0 auto; padding: 12px 16px 60px; }
+  .how { background: var(--card); border: 1px solid var(--line); border-left: 5px solid var(--accent); border-radius: 12px; padding: 10px 14px; margin-bottom: 16px; }
+  .how p { margin: 4px 0; }
+  h2 { margin: 22px 0 8px; }
+  ol.gram { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+  ol.gram li { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; }
+  .no { display: inline-block; min-width: 2.6em; font-weight: 700; color: var(--accent); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 12px; }
+  .t { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 10px 14px; border-top: 5px solid var(--ok); }
+  .t.named { border-top-color: var(--todo); }
+  .t h3 { margin: 0; font-size: 1.1rem; } .t h3 .no { font-size: 1.25rem; }
+  .meta { color: var(--muted); font-size: .88rem; margin: 2px 0; }
+  .badge { display: inline-block; border-radius: 999px; padding: 0 8px; font-size: .8rem; font-weight: 600; color: #fff; background: var(--ok); }
+  .named .badge { background: var(--todo); }
+  .t p { margin: 6px 0; }
+  .en { color: var(--muted); font-size: .92rem; }
+  a { color: var(--accent); }
+  .links { font-size: .9rem; margin-top: 6px; }
+  .links a { display: inline-block; margin: 2px 10px 2px 0; }
+  @media print { header { position: static; } .t { break-inside: avoid; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Aufguss Studio · Review</h1>
+  <span id="filters"></span>
+  <span style="flex:1"></span>
+  <button data-lang="de">DE</button><button data-lang="en">EN</button>
+  <a href="./">→ App</a>
+</header>
+<main>
+  <div class="how" id="how"></div>
+  <h2 id="gH"></h2>
+  <ol class="gram" id="gram"></ol>
+  <h2 id="tH"></h2>
+  <div class="grid" id="list"></div>
+</main>
+<script src="techniques.js"></script>
+<script src="data.js"></script>
+<script>
+(function () {
+  "use strict";
+  const { TECHNIQUES, GRAMMAR } = window.AUFGUSS_DATA;
+  let lang = "de", filter = "all";
+  try { lang = localStorage.getItem("aufguss.reviewLang") || "de"; } catch (e) {}
+  const L = {
+    de: { how: ["So geht der Review: Diese Seite am Computer offen haben, im Chat mit Claude sprechen (am Handy).",
+                "Immer die Nummer nennen, z. B. „14: Pizza – stimmt, aber die Hand ist über dem Kopf“ oder „G5: Abschlagen auch nach jeder Runde kurz“.",
+                "Orange = Beschreibung fehlt oder ist unsicher. Grün = beschrieben, aber trotzdem gern prüfen. ▶ öffnet ein Video, ◎ die Animation in der App."],
+          g: "Die Grammatik (G1 …)", t: "Techniken", all: "Alle", todo: "Noch prüfen", vid: "Mit Video", lv: ["", "Einsteiger", "Fortgeschritten", "Profi"],
+          described: "beschrieben", named: "noch prüfen", use: "Wofür", aka: "Auch", rel: "Verwandt", anim: "◎ Animation", air: "Luft", heat: "Hitze", show: "Show", hand: "Hand", hands: "Hände", towels: "Tücher", fam: { rotation: "Drehung", eight: "Acht", sweep: "Schwung", whip: "Schlag", flatspin: "Flache Drehung", throw: "Wurf", wave: "Welle", pass: "Drehung/Durchgang" } },
+    en: { how: ["How the review works: keep this page open on the computer and talk to Claude in the chat (on your phone).",
+                "Always say the number, e.g. “14: Pizza – right, but the hand is above the head” or “G5: short Abschlagen after every round too”.",
+                "Orange = description missing or unsure. Green = described, still worth a check. ▶ opens a video, ◎ the animation in the app."],
+          g: "The grammar (G1 …)", t: "Techniques", all: "All", todo: "To verify", vid: "With video", lv: ["", "Beginner", "Intermediate", "Advanced"],
+          described: "described", named: "to verify", use: "Use", aka: "aka", rel: "Related", anim: "◎ Animation", air: "Air", heat: "Heat", show: "Show", hand: "hand", hands: "hands", towels: "towels", fam: { rotation: "Rotation", eight: "Figure eight", sweep: "Sweep", whip: "Strike", flatspin: "Flat spin", throw: "Throw", wave: "Wave", pass: "Turn/pass" } },
+  };
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const other = () => (lang === "de" ? "en" : "de");
+  const dots = (n) => "●".repeat(n) + "○".repeat(3 - n);
+  function render() {
+    const l = L[lang]; document.documentElement.lang = lang;
+    document.querySelectorAll("[data-lang]").forEach((b) => b.setAttribute("aria-pressed", b.dataset.lang === lang));
+    const counts = { all: TECHNIQUES.length, todo: TECHNIQUES.filter((t) => t.status === "named").length, vid: TECHNIQUES.filter((t) => t.videos && t.videos.length).length };
+    document.getElementById("filters").innerHTML = ["all", "todo", "vid", "1", "2", "3"].map((f) =>
+      `<button data-filter="${f}" aria-pressed="${filter === f}">${l[f] || l.lv[f]}${counts[f] !== undefined ? " (" + counts[f] + ")" : ""}</button>`).join(" ");
+    document.getElementById("how").innerHTML = l.how.map((p) => `<p>${esc(p)}</p>`).join("");
+    document.getElementById("gH").textContent = l.g;
+    document.getElementById("tH").textContent = l.t;
+    document.getElementById("gram").innerHTML = GRAMMAR.map((g) => `<li><span class="no">${g.no}</span> ${esc(g[lang])}<div class="en">${esc(g[other()])}</div></li>`).join("");
+    const list = TECHNIQUES.filter((t) => filter === "all" || (filter === "todo" ? t.status === "named" : filter === "vid" ? t.videos && t.videos.length : String(t.level) === filter));
+    document.getElementById("list").innerHTML = list.map((t) => `
+      <article class="t ${t.status}" id="t${t.no}">
+        <h3><span class="no">${t.no}</span> ${esc(t.name[lang])} <span class="badge">${l[t.status]}</span></h3>
+        <div class="meta">${esc(t.name[other()])} · ${l.lv[t.level]} · ${l.fam[t.family]} · ${t.hands} ${t.hands === 1 ? l.hand : l.hands}${t.towels === 2 ? " · 2 " + l.towels : ""}${t.tool !== "towel" ? " · " + esc(t.tool) : ""}</div>
+        <div class="meta">${l.air} ${dots(t.air)} · ${l.heat} ${dots(t.heat)} · ${l.show} ${dots(t.show)}</div>
+        <p>${esc(t.desc[lang])}</p>
+        <p class="en">${esc(t.desc[other()])}</p>
+        <p><b>${l.use}:</b> ${esc(t.use[lang])}</p>
+        ${t.aka && t.aka.length ? `<div class="meta">${l.aka}: ${esc(t.aka.join(", "))}</div>` : ""}
+        ${t.related && t.related.length ? `<div class="meta">${l.rel}: ${esc(t.related.join(", "))}</div>` : ""}
+        <div class="links">${(t.videos || []).map((v) => `<a href="${esc(v.url)}" target="_blank" rel="noopener">▶ ${esc(v.title)}</a>`).join("")}
+          <a href="./#t-${t.id}" target="_blank">${l.anim}</a></div>
+      </article>`).join("");
+  }
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.lang) { lang = b.dataset.lang; try { localStorage.setItem("aufguss.reviewLang", lang); } catch (x) {} render(); }
+    if (b.dataset.filter) { filter = b.dataset.filter; render(); }
+  });
+  render();
+})();
+</script>
+</body>
+</html>
