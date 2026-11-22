@@ -253,7 +253,7 @@
     const chip = (step, pi, si) => {
       const x = byId[step.chosen]; if (!x) return "";
       return `<div class="tech">
-        <button class="chip" data-open="${x.id}">${esc(nm(x.name))}${x.status === "named" ? ' <span class="verify" aria-label="' + t("toVerify") + '">?</span>' : ""}</button>
+        <button class="chip" data-open="${x.id}"><span class="code">${esc(x.code)}</span> ${esc(nm(x.name))}${x.status === "named" ? ' <span class="verify" aria-label="' + t("toVerify") + '">?</span>' : ""}</button>
         ${step.candidates.length > 1 ? `<button class="swap" data-swap="${pi}:${si}" aria-label="${t("swap")}: ${esc(nm(x.name))}">⇄</button>` : ""}
         ${step.label ? `<span class="lbl">${esc(step.label)}</span>` : ""}</div>`;
     };
@@ -280,7 +280,7 @@
       </div>
       <ul class="lib">${list.map((x) => `
         <li><button class="libitem" data-open="${x.id}">
-          <strong>${x.no}. ${esc(nm(x.name))}</strong>
+          <strong><span class="code">${esc(x.code)}</span> ${esc(nm(x.name))}</strong>
           <span class="meta">${t("lv" + x.level)} · ${t("fam")[x.family]}${x.status === "named" ? " · " + t("toVerify") : ""}</span>
           <span class="meta">${t("air")} ${dots(x.air)} · ${t("heat")} ${dots(x.heat)} · ${t("show")} ${dots(x.show)}</span>
         </button>
@@ -302,7 +302,7 @@
     const dlg = $("#sheet");
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
     dlg.innerHTML = `<div class="sheet-in">
-      <header><h2>${x.no}. ${esc(nm(x.name))}</h2><button class="x" data-close aria-label="${t("close")}">✕</button></header>
+      <header><h2><span class="code">${esc(x.code)}</span> ${esc(nm(x.name))}</h2><button class="x" data-close aria-label="${t("close")}">✕</button></header>
       <p class="meta">${t("lv" + x.level)} · ${t("fam")[x.family]} · ${x.hands === 2 ? "2 ✋" : "1 ✋"}${x.towels === 2 ? " · 2 towels" : ""}${x.status === "named" ? " · " + t("toVerify") : ""}</p>
       <canvas id="demoCanvas" role="img" aria-label="${esc(nm(x.name))}"></canvas>
       <div class="controls"><button id="playBtn">${reduce ? t("play") : t("pause")}</button>

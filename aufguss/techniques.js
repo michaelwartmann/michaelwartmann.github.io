@@ -6,6 +6,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 1,
   "id": "propeller",
+  "code": "R1",
   "level": 1,
   "family": "rotation",
   "tool": "towel",
@@ -65,6 +66,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 2,
   "id": "flag",
+  "code": "F1",
   "level": 1,
   "family": "sweep",
   "tool": "towel",
@@ -116,6 +118,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 3,
   "id": "shovel",
+  "code": "F2",
   "level": 1,
   "family": "sweep",
   "tool": "towel",
@@ -166,6 +169,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 4,
   "id": "comb",
+  "code": "F3",
   "level": 1,
   "family": "sweep",
   "tool": "towel",
@@ -210,6 +214,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 5,
   "id": "eight",
+  "code": "X1",
   "level": 1,
   "family": "eight",
   "tool": "towel",
@@ -260,6 +265,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 6,
   "id": "circles",
+  "code": "R2",
   "level": 1,
   "family": "rotation",
   "tool": "towel",
@@ -302,6 +308,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 7,
   "id": "sail",
+  "code": "F4",
   "level": 1,
   "family": "sweep",
   "tool": "towel",
@@ -339,6 +346,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 8,
   "id": "abschlagen",
+  "code": "S1",
   "level": 1,
   "family": "whip",
   "tool": "towel",
@@ -380,6 +388,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 9,
   "id": "fan",
+  "code": "F1·Fan",
   "level": 1,
   "family": "sweep",
   "tool": "fan",
@@ -419,6 +428,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 10,
   "id": "x-swing",
+  "code": "X2",
   "level": 1,
   "family": "eight",
   "tool": "towel",
@@ -460,6 +470,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 11,
   "id": "holzfaeller",
+  "code": "S2",
   "level": 1,
   "family": "whip",
   "tool": "towel",
@@ -506,6 +517,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 12,
   "id": "windmill",
+  "code": "R?",
   "level": 1,
   "family": "rotation",
   "tool": "towel",
@@ -551,6 +563,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 13,
   "id": "delphin",
+  "code": "W?",
   "level": 1,
   "family": "wave",
   "tool": "towel",
@@ -591,6 +604,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 14,
   "id": "spoon",
+  "code": "F1+F2",
   "tool": "towel",
   "hands": 2,
   "towels": 1,
@@ -629,6 +643,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 15,
   "id": "double-eight",
+  "code": "X3",
   "level": 2,
   "family": "eight",
   "tool": "towel",
@@ -669,6 +684,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 16,
   "id": "pizza",
+  "code": "P1",
   "level": 2,
   "family": "flatspin",
   "tool": "towel",
@@ -709,6 +725,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 17,
   "id": "helicopter-variants",
+  "code": "R3",
   "level": 2,
   "family": "rotation",
   "tool": "towel",
@@ -753,6 +770,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 18,
   "id": "flag-variants",
+  "code": "F6",
   "level": 2,
   "family": "sweep",
   "tool": "towel",
@@ -790,6 +808,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 19,
   "id": "unfolding",
+  "code": "W1",
   "level": 2,
   "family": "wave",
   "tool": "towel",
@@ -833,6 +852,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 20,
   "id": "slap",
+  "code": "S3",
   "level": 2,
   "family": "whip",
   "tool": "towel",
@@ -879,6 +899,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 21,
   "id": "throw-catch",
+  "code": "T1",
   "level": 2,
   "family": "throw",
   "tool": "towel",
@@ -920,6 +941,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 22,
   "id": "affenschaukel",
+  "code": "F?",
   "level": 2,
   "family": "sweep",
   "tool": "towel",
@@ -954,6 +976,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 23,
   "id": "libelle",
+  "code": "R?·2T",
   "level": 2,
   "family": "rotation",
   "tool": "towel",
@@ -996,6 +1019,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 24,
   "id": "raute",
+  "code": "X?",
   "level": 2,
   "family": "eight",
   "tool": "towel",
@@ -1030,6 +1054,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 25,
   "id": "flag-to-back",
+  "code": "F5",
   "tool": "towel",
   "hands": 2,
   "towels": 1,
@@ -1067,6 +1092,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 26,
   "id": "double-pizza",
+  "code": "P1·2T",
   "level": 3,
   "family": "flatspin",
   "tool": "towel",
@@ -1105,6 +1131,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 27,
   "id": "super-eight",
+  "code": "X1·2T",
   "level": 3,
   "family": "eight",
   "tool": "towel",
@@ -1152,6 +1179,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 28,
   "id": "japanese-snake",
+  "code": "W3",
   "level": 3,
   "family": "wave",
   "tool": "towel",
@@ -1189,6 +1217,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 29,
   "id": "snake",
+  "code": "W2",
   "level": 3,
   "family": "wave",
   "tool": "towel",
@@ -1226,8 +1255,9 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 30,
   "id": "angelo",
+  "code": "X4",
   "level": 3,
-  "family": "sweep",
+  "family": "eight",
   "tool": "towel",
   "hands": 2,
   "towels": 2,
@@ -1268,6 +1298,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 31,
   "id": "disco",
+  "code": "R?",
   "level": 3,
   "family": "rotation",
   "tool": "towel",
@@ -1305,6 +1336,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 32,
   "id": "around-the-moon",
+  "code": "T2",
   "level": 3,
   "family": "throw",
   "tool": "towel",
@@ -1348,6 +1380,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 33,
   "id": "dirty-copter",
+  "code": "R4",
   "level": 3,
   "family": "rotation",
   "tool": "towel",
@@ -1389,6 +1422,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 34,
   "id": "maikaefer",
+  "code": "R?·2T",
   "level": 3,
   "family": "rotation",
   "tool": "towel",
@@ -1431,6 +1465,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 35,
   "id": "big-towel",
+  "code": "F1·XL",
   "level": 3,
   "family": "sweep",
   "tool": "big towel",
@@ -1469,6 +1504,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 36,
   "id": "twirl",
+  "code": "D1",
   "tool": "towel",
   "hands": 1,
   "towels": 1,
@@ -1510,6 +1546,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 37,
   "id": "twirl-angel",
+  "code": "D1+X4",
   "tool": "towel",
   "hands": 1,
   "towels": 1,
@@ -1553,6 +1590,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 38,
   "id": "twirl-pizza",
+  "code": "D1+P1",
   "tool": "towel",
   "hands": 1,
   "towels": 1,
@@ -1595,6 +1633,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 39,
   "id": "open-close-big",
+  "code": "W1·XL",
   "tool": "big towel",
   "hands": 2,
   "towels": 1,
@@ -1635,6 +1674,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 40,
   "id": "finger-twirl",
+  "code": "P2",
   "tool": "towel",
   "hands": 1,
   "towels": 1,
@@ -1675,6 +1715,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 41,
   "id": "curls",
+  "code": "W?",
   "tool": "towel",
   "hands": 1,
   "towels": 1,
@@ -1719,6 +1760,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 42,
   "id": "flips",
+  "code": "T?",
   "tool": "towel",
   "hands": 1,
   "towels": 1,
@@ -1763,6 +1805,7 @@ window.AUFGUSS_TECHNIQUES = [
 {
   "no": 43,
   "id": "fishing",
+  "code": "S?",
   "tool": "towel",
   "hands": 1,
   "towels": 1,

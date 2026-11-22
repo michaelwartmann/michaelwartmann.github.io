@@ -25,6 +25,9 @@
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 12px; }
   .t { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 10px 14px; border-top: 5px solid var(--ok); }
   .t.named { border-top-color: var(--todo); }
+  .code { font-weight: 800; background: var(--accent); color: #fff; border-radius: 6px; padding: 0 6px; margin-right: 4px; }
+  .legend { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; }
+  .legend td { padding: 3px 10px 3px 0; vertical-align: top; }
   .t h3 { margin: 0; font-size: 1.1rem; } .t h3 .no { font-size: 1.25rem; }
   .meta { color: var(--muted); font-size: .88rem; margin: 2px 0; }
   .badge { display: inline-block; border-radius: 999px; padding: 0 8px; font-size: .8rem; font-weight: 600; color: #fff; background: var(--ok); }
@@ -47,6 +50,8 @@
 </header>
 <main>
   <div class="how" id="how"></div>
+  <h2 id="sH"></h2>
+  <div class="legend" id="legend"></div>
   <h2 id="gH"></h2>
   <ol class="gram" id="gram"></ol>
   <h2 id="tH"></h2>
@@ -64,11 +69,29 @@
     de: { how: ["So geht der Review: Diese Seite am Computer offen haben, im Chat mit Claude sprechen (am Handy).",
                 "Immer die Nummer nennen, z. B. „14: Pizza – stimmt, aber die Hand ist über dem Kopf“ oder „G5: Abschlagen auch nach jeder Runde kurz“.",
                 "Orange = Beschreibung fehlt oder ist unsicher. Grün = beschrieben, aber trotzdem gern prüfen. ▶ öffnet ein Video, ◎ die Animation in der App."],
+          schema: "Das Schema (Vorschlag)", legend: [
+            ["R", "Rotation – das Tuch kreist (R1 Propeller, R2 Kreise …)"], ["X", "Acht / Kreuz – die Bahn kreuzt sich (X1 Acht, X4 Engel ∞)"],
+            ["F", "Fläche / Fahne – das offene Tuch schiebt Luft (F1 Fahne, F2 Schaufel, F3 Kamm)"], ["S", "Schlag – Peitschenwelle zum Gast (S1 Abschlagen)"],
+            ["P", "Pizza – flache Drehung, das Tuch als Scheibe"], ["W", "Welle – Falten, Entfalten, Schlange"],
+            ["T", "Toss / Wurf – loslassen und fangen"], ["D", "Drehung – der Körper dreht sich (Pirouette)"],
+            ["1, 2, 3", "Grundformen je Familie, in Lern-Reihenfolge – wie Krieger 1, 2, 3 im Yoga"], ["?", "Familie vermutet, Grundform noch unbekannt"],
+            ["·2T", "mit zwei Tüchern"], ["·XL", "mit großem Tuch (ca. 150×100)"], ["·Fan", "mit Fächer statt Tuch"],
+            ["+", "zwei Techniken in einer Bewegung (D1+P1 = Twirl-Pizza)"], ["→", "Flow: Techniken nacheinander (R1 → F1 → S1)"],
+            ["Name", "Gemeinschaftsnamen bleiben als Spitzname, wo es einen gibt. Die Nummer vorne (1–43) ist nur für den Review."]],
           g: "Die Grammatik (G1 …)", t: "Techniken", all: "Alle", todo: "Noch prüfen", vid: "Mit Video", lv: ["", "Einsteiger", "Fortgeschritten", "Profi"],
           described: "beschrieben", named: "noch prüfen", use: "Wofür", aka: "Auch", rel: "Verwandt", anim: "◎ Animation", air: "Luft", heat: "Hitze", show: "Show", hand: "Hand", hands: "Hände", towels: "Tücher", fam: { rotation: "Drehung", eight: "Acht", sweep: "Schwung", whip: "Schlag", flatspin: "Flache Drehung", throw: "Wurf", wave: "Welle", pass: "Drehung/Durchgang" } },
     en: { how: ["How the review works: keep this page open on the computer and talk to Claude in the chat (on your phone).",
                 "Always say the number, e.g. “14: Pizza – right, but the hand is above the head” or “G5: short Abschlagen after every round too”.",
                 "Orange = description missing or unsure. Green = described, still worth a check. ▶ opens a video, ◎ the animation in the app."],
+          schema: "The scheme (proposal)", legend: [
+            ["R", "Rotation – the towel circles (R1 Propeller, R2 Circles …)"], ["X", "Eight / cross – the path crosses itself (X1 Eight, X4 Angel ∞)"],
+            ["F", "Flag / surface – the open towel pushes air (F1 Flag, F2 Shovel, F3 Comb)"], ["S", "Strike – a whip wave towards a guest (S1 Abschlagen)"],
+            ["P", "Pizza – flat spin, the towel as a disc"], ["W", "Wave – fold, unfold, snake"],
+            ["T", "Toss – let go and catch"], ["D", "Turn – the body turns (pirouette)"],
+            ["1, 2, 3", "Base forms per family, in learning order – like Warrior 1, 2, 3 in yoga"], ["?", "Family guessed, base form still unknown"],
+            ["·2T", "with two towels"], ["·XL", "with a big towel (about 150×100)"], ["·Fan", "with a fan instead of a towel"],
+            ["+", "two techniques in one move (D1+P1 = Twirl pizza)"], ["→", "Flow: techniques in a row (R1 → F1 → S1)"],
+            ["Name", "Community names stay as nicknames where there is one. The number in front (1–43) is only for the review."]],
           g: "The grammar (G1 …)", t: "Techniques", all: "All", todo: "To verify", vid: "With video", lv: ["", "Beginner", "Intermediate", "Advanced"],
           described: "described", named: "to verify", use: "Use", aka: "aka", rel: "Related", anim: "◎ Animation", air: "Air", heat: "Heat", show: "Show", hand: "hand", hands: "hands", towels: "towels", fam: { rotation: "Rotation", eight: "Figure eight", sweep: "Sweep", whip: "Strike", flatspin: "Flat spin", throw: "Throw", wave: "Wave", pass: "Turn/pass" } },
   };
@@ -82,13 +105,15 @@
     document.getElementById("filters").innerHTML = ["all", "todo", "vid", "1", "2", "3"].map((f) =>
       `<button data-filter="${f}" aria-pressed="${filter === f}">${l[f] || l.lv[f]}${counts[f] !== undefined ? " (" + counts[f] + ")" : ""}</button>`).join(" ");
     document.getElementById("how").innerHTML = l.how.map((p) => `<p>${esc(p)}</p>`).join("");
+    document.getElementById("sH").textContent = l.schema;
+    document.getElementById("legend").innerHTML = "<table>" + l.legend.map(([k, v]) => `<tr><td><span class="code">${esc(k)}</span></td><td>${esc(v)}</td></tr>`).join("") + "</table>";
     document.getElementById("gH").textContent = l.g;
     document.getElementById("tH").textContent = l.t;
     document.getElementById("gram").innerHTML = GRAMMAR.map((g) => `<li><span class="no">${g.no}</span> ${esc(g[lang])}<div class="en">${esc(g[other()])}</div></li>`).join("");
     const list = TECHNIQUES.filter((t) => filter === "all" || (filter === "todo" ? t.status === "named" : filter === "vid" ? t.videos && t.videos.length : String(t.level) === filter));
     document.getElementById("list").innerHTML = list.map((t) => `
       <article class="t ${t.status}" id="t${t.no}">
-        <h3><span class="no">${t.no}</span> ${esc(t.name[lang])} <span class="badge">${l[t.status]}</span></h3>
+        <h3><span class="no">${t.no}</span> <span class="code">${esc(t.code)}</span> ${esc(t.name[lang])} <span class="badge">${l[t.status]}</span></h3>
         <div class="meta">${esc(t.name[other()])} · ${l.lv[t.level]} · ${l.fam[t.family]} · ${t.hands} ${t.hands === 1 ? l.hand : l.hands}${t.towels === 2 ? " · 2 " + l.towels : ""}${t.tool !== "towel" ? " · " + esc(t.tool) : ""}</div>
         <div class="meta">${l.air} ${dots(t.air)} · ${l.heat} ${dots(t.heat)} · ${l.show} ${dots(t.show)}</div>
         <p>${esc(t.desc[lang])}</p>
