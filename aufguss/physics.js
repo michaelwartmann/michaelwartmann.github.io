@@ -173,16 +173,9 @@
         <p class="hint">${tr("Simplified model: a 2D slice, turbulence as extra friction, numbers in the right range but not a measurement.", "Vereinfachtes Modell: ein 2D-Schnitt, Turbulenz als zusätzliche Reibung, Zahlen in der richtigen Größenordnung, aber keine Messung.")}</p>
       </section>
       <section class="card">
-        <h2>${tr("Your sauna, from above", "Deine Sauna von oben")}</h2>
-        <p class="hint">${tr("Tap the corners of the room (grid = 50 cm), then tap “Place stove” and tap where it stands.", "Tippe die Ecken des Raums an (Raster = 50 cm), dann „Ofen setzen“ und tippe, wo er steht.")}</p>
-        <canvas id="planCv" class="plancv" role="img" aria-label="${tr("Floor plan editor", "Grundriss-Editor")}"></canvas>
-        <div class="controls">
-          <button id="plOven" aria-pressed="false">${tr("Place stove", "Ofen setzen")}</button>
-          <button id="plUndo">${tr("Undo corner", "Ecke zurück")}</button>
-          <button id="plClear">${tr("Clear", "Leeren")}</button>
-          <label>${tr("Ceiling", "Decke")} <input id="plH" type="range" min="1.9" max="3" step="0.05" value="2.3"> <output id="plHo">2.3 m</output></label>
-        </div>
-        <div id="plOut" aria-live="polite"></div>
+        <h2>${tr("Your sauna in 3D", "Deine Sauna in 3D")}</h2>
+        <p>${tr("Draw the floor plan of your own sauna, choose the walls with benches and the height of the ceiling, then watch it in 3D: pour, see the steam mushroom, and follow the sauna master waving across the stove and around it.", "Zeichne den Grundriss deiner eigenen Sauna, wähle die Wände mit Bänken und die Deckenhöhe, dann sieh sie in 3D: aufgießen, den Dampfpilz sehen und der Saunameisterin folgen, wie sie über den Ofen und um ihn herum wedelt.")}</p>
+        <p><a class="labbtn" href="sauna.html">${tr("Open your sauna in 3D", "Deine Sauna in 3D öffnen")}</a></p>
       </section>`;
 
     // ----- cross-section -----
@@ -282,58 +275,7 @@
     for (let i = 0; i < 150; i++) air.step(1 / 30);
     raf = requestAnimationFrame(frame); guestsPanel();
 
-    // ----- floor plan -----
-    const pc = el.querySelector("#planCv"), pctx = pc.getContext("2d"), plan = Object.assign({ pts: [], oven: null, h: 2.3 }, load());
-    function load() { try { return JSON.parse(localStorage.getItem("aufguss.plan")) || {}; } catch (e) { return {}; } }
-    function save() { try { localStorage.setItem("aufguss.plan", JSON.stringify(plan)); } catch (e) {} }
-    const GRID = 0.5, SPAN = 6; let ps = 1, ovenMode = false;
-    function psize() { const dpr = Math.min(2, root.devicePixelRatio || 1), w = pc.clientWidth; pc.style.height = w + "px"; pc.width = Math.round(w * dpr); pc.height = Math.round(w * dpr); pctx.setTransform(dpr, 0, 0, dpr, 0, 0); ps = w / SPAN; }
-    const onPR = () => { psize(); pdraw(); }; psize(); root.addEventListener("resize", onPR);
-    const area = (P) => { let a = 0; for (let i = 0; i < P.length; i++) { const [x1, y1] = P[i], [x2, y2] = P[(i + 1) % P.length]; a += x1 * y2 - x2 * y1; } return Math.abs(a) / 2; };
-    function inside(P, x, y) { let c = false; for (let i = 0, j = P.length - 1; i < P.length; j = i++) { const [xi, yi] = P[i], [xj, yj] = P[j]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c; } return c; }
-    function pdraw() {
-      const w = pc.clientWidth; pctx.clearRect(0, 0, w, w);
-      pctx.strokeStyle = "rgba(127,100,80,0.25)"; pctx.lineWidth = 1;
-      for (let g = 0; g <= SPAN; g += GRID) { pctx.beginPath(); pctx.moveTo(g * ps, 0); pctx.lineTo(g * ps, w); pctx.moveTo(0, g * ps); pctx.lineTo(w, g * ps); pctx.stroke(); }
-      const P = plan.pts;
-      if (P.length >= 3) { // warm near the stove and under its plume, cool in far corners
-        const step = 0.1;
-        for (let x = step / 2; x < SPAN; x += step) for (let y = step / 2; y < SPAN; y += step) {
-          if (!inside(P, x, y)) continue;
-          let t = 0.35; if (plan.oven) { const d = Math.hypot(x - plan.oven[0], y - plan.oven[1]); t = 0.25 + 0.75 * Math.exp(-d / 1.6); }
-          const wallD = Math.min(...P.map((p, i) => segDist([x, y], p, P[(i + 1) % P.length]))); t -= 0.12 * Math.exp(-wallD / 0.25);
-          const c = heatColor(40 + 70 * Math.max(0, Math.min(1, t))); pctx.fillStyle = `rgb(${c.map((x) => Math.round(x * 0.55 + 250 * 0.45)).join(",")})`; pctx.fillRect((x - step / 2) * ps, (y - step / 2) * ps, step * ps + 0.5, step * ps + 0.5);
-        }
-      }
-      if (P.length) { pctx.strokeStyle = "#7a3e1d"; pctx.lineWidth = 3; pctx.beginPath(); P.forEach(([x, y], i) => (i ? pctx.lineTo(x * ps, y * ps) : pctx.moveTo(x * ps, y * ps))); if (P.length >= 3) pctx.closePath(); pctx.stroke(); pctx.fillStyle = "#7a3e1d"; P.forEach(([x, y]) => { pctx.beginPath(); pctx.arc(x * ps, y * ps, 5, 0, TAU); pctx.fill(); }); }
-      if (plan.oven) { pctx.fillStyle = "#5a4a40"; pctx.fillRect((plan.oven[0] - 0.3) * ps, (plan.oven[1] - 0.3) * ps, 0.6 * ps, 0.6 * ps); pctx.fillStyle = "#fff"; pctx.font = "700 12px system-ui"; pctx.textAlign = "center"; pctx.fillText(tr("stove", "Ofen"), plan.oven[0] * ps, plan.oven[1] * ps + 4); }
-      if (P.length >= 3 && plan.oven) { const far = P.reduce((b, p) => (Math.hypot(p[0] - plan.oven[0], p[1] - plan.oven[1]) > Math.hypot(b[0] - plan.oven[0], b[1] - plan.oven[1]) ? p : b)); pctx.strokeStyle = "#3f6f80"; pctx.lineWidth = 3; pctx.beginPath(); pctx.arc(far[0] * ps, far[1] * ps, 14, 0, TAU); pctx.stroke(); }
-      pout();
-    }
-    function segDist(p, a, b) { const ab = [b[0] - a[0], b[1] - a[1]], t = Math.max(0, Math.min(1, ((p[0] - a[0]) * ab[0] + (p[1] - a[1]) * ab[1]) / ((ab[0] ** 2 + ab[1] ** 2) || 1))); return Math.hypot(p[0] - a[0] - ab[0] * t, p[1] - a[1] - ab[1] * t); }
-    function pout() {
-      const P = plan.pts, o = el.querySelector("#plOut");
-      if (P.length < 3) { o.innerHTML = `<p class="hint">${tr("At least three corners.", "Mindestens drei Ecken.")}</p>`; return; }
-      const A = area(P), V = A * plan.h, water = V * rules.waterPerM3;
-      let txt = `<p><b>${A.toFixed(1)} m²</b> × ${plan.h.toFixed(2)} m = <b>${V.toFixed(1)} m³</b>. ${tr("Water per infusion: at most", "Wasser pro Aufguss: höchstens")} <b>${Math.round(water / 50) * 50} ml</b> (${rules.waterPerM3} g/m³), ${tr("in 3–4 portions", "in 3–4 Portionen")}.</p>`;
-      if (plan.oven) txt += `<p>${tr("The blue ring marks the corner farthest from the stove: the air stays coolest there. Seat beginners nearby, and wave towards it to bring heat into the dead corner.", "Der blaue Ring zeigt die Ecke, die am weitesten vom Ofen entfernt ist: Dort bleibt die Luft am kühlsten. Setz Neulinge in die Nähe und wedel dorthin, um Wärme in die tote Ecke zu bringen.")}</p>`;
-      else txt += `<p class="hint">${tr("Place the stove to see warm and cool zones.", "Setz den Ofen, um warme und kühle Zonen zu sehen.")}</p>`;
-      o.innerHTML = txt;
-    }
-    pc.addEventListener("click", (e) => {
-      const r = pc.getBoundingClientRect(), x = Math.round((e.clientX - r.left) / ps / GRID * 2) * GRID / 2, y = Math.round((e.clientY - r.top) / ps / GRID * 2) * GRID / 2; // snap to 25 cm
-      if (ovenMode) { plan.oven = [x, y]; ovenMode = false; el.querySelector("#plOven").setAttribute("aria-pressed", "false"); } else plan.pts.push([x, y]);
-      save(); pdraw();
-    });
-    el.querySelector("#plOven").onclick = (e) => { ovenMode = !ovenMode; e.currentTarget.setAttribute("aria-pressed", ovenMode); };
-    el.querySelector("#plUndo").onclick = () => { plan.pts.pop(); save(); pdraw(); };
-    el.querySelector("#plClear").onclick = () => { plan.pts = []; plan.oven = null; save(); pdraw(); };
-    const hEl = el.querySelector("#plH"); hEl.value = plan.h; el.querySelector("#plHo").textContent = plan.h.toFixed(2) + " m";
-    hEl.oninput = () => { plan.h = +hEl.value; el.querySelector("#plHo").textContent = plan.h.toFixed(2) + " m"; save(); pout(); };
-    if (!plan.pts.length) { plan.pts = [[1, 1], [4, 1], [4, 3.5], [1, 3.5]]; plan.oven = [1.5, 1.5]; }
-    pdraw();
-
-    return { stop() { cancelAnimationFrame(raf); root.removeEventListener("resize", onR); root.removeEventListener("resize", onPR); }, pause() { running = false; }, resume() { running = true; last = 0; }, air };
+    return { stop() { cancelAnimationFrame(raf); root.removeEventListener("resize", onR); }, pause() { running = false; }, resume() { running = true; last = 0; }, air };
   }
   root.AufgussPhysics = { mount, skin, dewPoint, vapDensSat };
 })(typeof window !== "undefined" ? window : globalThis);

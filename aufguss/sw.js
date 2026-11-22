@@ -1,6 +1,6 @@
 // Offline cache: the app works without internet after the first visit.
-const CACHE = "aufguss-v16";
-const FILES = ["./", "index.html", "techniques.js", "data.js", "review.html", "pose-engine.js", "demo.js", "clip.js", "profile.js", "physics.js", "lab.html", "lab.js", "app.js", "manifest.webmanifest",
+const CACHE = "aufguss-v17";
+const FILES = ["./", "index.html", "techniques.js", "data.js", "review.html", "pose-engine.js", "demo.js", "clip.js", "profile.js", "physics.js", "sauna.html", "plan.js", "sauna3d.js", "lab.html", "lab.js", "app.js", "manifest.webmanifest",
   "icons/icon-192.png", "icons/icon-512.png", "icons/icon-maskable-512.png", "icons/apple-touch-icon.png"];
 self.addEventListener("install", (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES))); self.skipWaiting(); });
 self.addEventListener("activate", (e) => {
