@@ -314,6 +314,7 @@
     dlg.innerHTML = `<div class="sheet-in">
       <header><h2><span class="code">${esc(x.code)}</span> ${esc(nm(x.name))}</h2><button class="x" data-close aria-label="${t("close")}">✕</button></header>
       <p class="meta">${t("lv" + x.level)} · ${t("fam")[x.family]} · ${x.hands === 2 ? "2 ✋" : "1 ✋"}${x.towels === 2 ? " · 2 towels" : ""}${x.status === "named" ? " · " + t("toVerify") : ""}</p>
+      ${x.clip ? `<button class="clipbtn" id="clipBtn">▶ ${lang === "de" ? "Clip ansehen" : "Watch clip"} · ${esc(x.clip.credit || "YouTube")}</button><div class="cliphost" id="clipHost"></div>` : ""}
       <canvas id="demoCanvas" role="img" aria-label="${esc(nm(x.name))}"></canvas>
       <div class="controls"><button id="playBtn">${reduce ? t("play") : t("pause")}</button>
         <label>${t("tempo")} <input id="tempo" type="range" min="0.25" max="1.5" step="0.05" value="1"></label></div>
@@ -331,8 +332,13 @@
     if (!reduce) demo.play();
     $("#playBtn").onclick = () => { if (demo.running) { demo.pause(); $("#playBtn").textContent = t("play"); } else { demo.play(); $("#playBtn").textContent = t("pause"); } };
     $("#tempo").oninput = (e) => demo.setTempo(parseFloat(e.target.value));
+    if (x.clip) $("#clipBtn").onclick = () => {
+      if (clipLoop) { clipLoop.stop(); clipLoop = null; return; }
+      window.AufgussClip.loop($("#clipHost"), x.clip).then((h) => (clipLoop = h)).catch(() => { $("#clipHost").textContent = lang === "de" ? "Offline: Clip nicht verfügbar." : "Offline: clip not available."; });
+    };
   }
-  function closeTech() { const dlg = $("#sheet"); if (demo) { demo.destroy(); demo = null; } dlg.close ? dlg.close() : dlg.removeAttribute("open"); }
+  let clipLoop = null;
+  function closeTech() { const dlg = $("#sheet"); if (clipLoop) { clipLoop.stop(); clipLoop = null; } if (demo) { demo.destroy(); demo = null; } dlg.close ? dlg.close() : dlg.removeAttribute("open"); }
 
   // ---------- Events ----------
   document.addEventListener("input", (e) => {
@@ -376,7 +382,7 @@
       renderPlan(plan);
     }
   });
-  $("#sheet").addEventListener("close", () => { if (demo) { demo.destroy(); demo = null; } });
+  $("#sheet").addEventListener("close", () => { if (clipLoop) { clipLoop.stop(); clipLoop = null; } if (demo) { demo.destroy(); demo = null; } });
   $("#sheet").addEventListener("click", (e) => { if (e.target.id === "sheet") closeTech(); });
 
   render();
