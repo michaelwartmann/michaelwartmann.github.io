@@ -37,22 +37,39 @@
         if (c < cols - 1) link(idx(c, r), idx(c + 1, r));
         if (r < rows - 1) link(idx(c, r), idx(c, r + 1));
         if (c < cols - 1 && r < rows - 1) { link(idx(c, r), idx(c + 1, r + 1)); link(idx(c + 1, r), idx(c, r + 1)); }
-        if (c < cols - 2) link(idx(c, r), idx(c + 2, r), 0.35);  // bending: terry folded double is fairly stiff
-        if (r < rows - 2) link(idx(c, r), idx(c, r + 2), 0.35);
+        if (c < cols - 2) link(idx(c, r), idx(c + 2, r), 0.6);  // bending: terry is fairly stiff
+        if (r < rows - 2) link(idx(c, r), idx(c, r + 2), 0.6);
+        if (c < cols - 2 && r < rows - 2) { link(idx(c, r), idx(c + 2, r + 2), 0.3); link(idx(c + 2, r), idx(c, r + 2), 0.3); }
       }
     }
     place(fn) { // put every point somewhere sensible before the first frame
       for (let i = 0; i < this.p.length; i++) { const pt = fn(i); this.p[i] = pt.slice(); this.q[i] = pt.slice(); }
     }
+    // same towel physics as the towel lab: gravity, air resistance per patch, a little internal damping
     step(dt, drag) {
-      for (let i = 0; i < this.p.length; i++) {
-        if (this.pin.has(i)) continue;
-        const p = this.p[i], q = this.q[i];
-        const vel = mul(sub(p, q), drag);
-        this.q[i] = p.slice();
-        this.p[i] = add(add(p, vel), v(0, G * dt * dt, 0));
+      const n = this.p.length, cols = this.cols, rows = this.rows, mNode = 0.6 * this.w * this.h / n;
+      const vel = this.p.map((p, i) => sub(p, this.q[i])), acc = this.p.map(() => [0, G, 0]);
+      for (let r = 0; r < rows - 1; r++) for (let c = 0; c < cols - 1; c++) {
+        const ids = [this.idx(c, r), this.idx(c + 1, r), this.idx(c + 1, r + 1), this.idx(c, r + 1)], P = ids.map((i) => this.p[i]);
+        const nr = cross(sub(P[2], P[0]), sub(P[3], P[1])), A = len(nr) / 2; if (!A) continue;
+        const nu = mul(nr, 1 / (2 * A)), vq = mul(ids.reduce((s_, i) => add(s_, vel[i]), [0, 0, 0]), 1 / (4 * dt));
+        const vn = vq[0] * nu[0] + vq[1] * nu[1] + vq[2] * nu[2], vt = sub(vq, mul(nu, vn));
+        const F = add(mul(nu, -0.57 * A * vn * Math.abs(vn)), mul(vt, -0.03 * A * len(vt)));
+        for (const i of ids) acc[i] = add(acc[i], mul(F, 0.25 / mNode));
       }
-      for (let it = 0; it < 8; it++) {
+      for (let i = 0; i < n; i++) {
+        if (this.pin.has(i)) continue;
+        let dv = mul(acc[i], dt * dt); const dl = len(dv), vl = len(vel[i]) + Math.abs(G) * dt * dt * 2; if (dl > vl) dv = mul(dv, vl / dl);
+        vel[i] = add(mul(vel[i], drag), dv);
+      }
+      for (let i = 0; i < n; i++) {
+        if (this.pin.has(i)) continue;
+        const c = i % cols, r = (i / cols) | 0; let s_ = [0, 0, 0], k = 0;
+        for (const [dc, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const cc = c + dc, rr = r + dr; if (cc >= 0 && cc < cols && rr >= 0 && rr < rows) { s_ = add(s_, vel[this.idx(cc, rr)]); k++; } }
+        const vv = add(mul(vel[i], 0.92), mul(s_, 0.08 / k));
+        this.q[i] = this.p[i].slice(); this.p[i] = add(this.p[i], vv);
+      }
+      for (let it = 0; it < 12; it++) {
         for (const [a, b, rest, k] of this.links) {
           const pa = this.p[a], pb = this.p[b];
           const d = sub(pb, pa), l = len(d) || 1e-6;
@@ -354,7 +371,7 @@
           if (!cl) return;
           if (n === 1 && !h.L) return;
           this.pinCloth(cl, h, n);
-          cl.step(h_, 0.998);
+          cl.step(h_, 0.9995);
         });
       }
     }

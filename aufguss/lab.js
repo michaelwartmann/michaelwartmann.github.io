@@ -40,19 +40,19 @@
   // tw = wrist twist amplitude (deg), tp = its phase, t0 = resting wrist angle.
   const hand = (o) => Object.assign({ c: [0.25, 1.4, 0.3], a: [0, 0, 0], f: [1, 1, 1], p: [0, 90, 0], tw: 0, tp: 0, t0: 0 }, o);
   const PRESETS = {
-    propeller: { name: ["Propeller", "Propeller"], grip: "corner", towel: "strip", tempo: 1.6,
-      R: hand({ c: [0.08, 1.98, 0.12], a: [0.22, 0, 0.22], f: [1, 0, 1], p: [0, 0, 90], tw: 0 }), Lmode: "join", L: hand({}), torso: { tw: 4, tp: 0, le: 0, lp: 0, be: 0, bp: 0 } },
+    propeller: { name: ["Propeller", "Propeller"], grip: "corner", towel: "strip", tempo: 2.1,
+      R: hand({ c: [0.08, 1.98, 0.12], a: [0.3, 0, 0.3], f: [1, 0, 1], p: [0, 0, 90], tw: 0 }), Lmode: "join", L: hand({}), torso: { tw: 4, tp: 0, le: 0, lp: 0, be: 0, bp: 0 } },
     flag: { name: ["Side flag", "Seitliche Fahne"], grip: "edge", towel: "open", tempo: 0.6,
       R: hand({ c: [0.3, 1.97, 0.18], a: [0.17, 0.03, 0.06], f: [1, 2, 1], p: [0, 90, 90] }), Lmode: "own",
       L: hand({ c: [-0.12, 1.02, 0.3], a: [0.4, 0.03, 0.06], f: [1, 2, 1], p: [0, 90, 90] }), torso: { tw: 10, tp: 0, le: 6, lp: 0, be: 0, bp: 0 } },
-    eight: { name: ["Figure eight", "Acht"], grip: "corner", towel: "strip", tempo: 1.0,
+    eight: { name: ["Figure eight", "Acht"], grip: "corner", towel: "strip", tempo: 1.0, asym: 0.25, hit: 0.0,
       R: hand({ c: [0.05, 1.65, 0.35], a: [0.38, 0.2, 0.06], f: [1, 2, 1], p: [0, 0, 90], tw: 40, tp: 0 }), Lmode: "join", L: hand({}), torso: { tw: 12, tp: 0, le: 4, lp: 0, be: 0, bp: 0 } },
-    lumberjack: { name: ["Lumberjack", "Holzfäller"], grip: "spread", towel: "open", tempo: 0.5,
+    lumberjack: { name: ["Lumberjack", "Holzfäller"], grip: "spread", towel: "open", tempo: 0.5, asym: 0.6, hit: 0.25, tension: 0.06,
       R: hand({ c: [0.24, 1.5, 0.15], a: [0, 0.48, 0.32], f: [0, 1, 1], p: [0, 90, 0] }), Lmode: "mirror", L: hand({}), torso: { tw: 0, tp: 0, le: 0, lp: 0, be: 10, bp: 180 } },
-    parachute: { name: ["Parachute", "Fallschirm"], grip: "spread", towel: "open", tempo: 0.75,
+    parachute: { name: ["Parachute", "Fallschirm"], grip: "spread", towel: "open", tempo: 0.75, asym: 0.5, hit: 0.25, tension: 0.05,
       R: hand({ c: [0.28, 1.45, 0.3], a: [0.08, 0.52, 0.22], f: [1, 1, 1], p: [90, 90, 0] }), Lmode: "mirror", L: hand({}), torso: { tw: 0, tp: 0, le: 0, lp: 0, be: 12, bp: 0 } },
-    pizza: { name: ["Pizza (flat spin)", "Pizza"], grip: "corner", towel: "square", tempo: 1.8,
-      R: hand({ c: [0.12, 1.75, 0.3], a: [0.12, 0, 0.12], f: [1, 0, 1], p: [0, 0, 90], tw: 0 }), Lmode: "rest", L: hand({}), torso: { tw: 0, tp: 0, le: 0, lp: 0, be: 0, bp: 0 } },
+    pizza: { name: ["Pizza (flat spin)", "Pizza"], grip: "spin", towel: "square", tempo: 2.4, spin: 2.2,
+      R: hand({ c: [0.08, 1.72, 0.32], a: [0.02, 0.015, 0.02], f: [1, 2, 1], p: [0, 0, 90] }), Lmode: "join", L: hand({}), torso: { tw: 0, tp: 0, le: 0, lp: 0, be: 0, bp: 0 } },
   };
   const TOWELS = { // cols, rows, width, height (m). strip = 100×75 folded double lengthwise and again
     strip: [4, 12, 0.375, 1.0], open: [10, 8, 1.0, 0.7], square: [9, 9, 0.75, 0.75], big: [12, 9, 1.5, 1.0],
@@ -84,22 +84,47 @@
         if (c < cols - 1) link(i, this.idx(c + 1, r), 1);
         if (r < rows - 1) link(i, this.idx(c, r + 1), 1);
         if (c < cols - 1 && r < rows - 1) { link(i, this.idx(c + 1, r + 1), 1); link(this.idx(c + 1, r), this.idx(c, r + 1), 1); }
-        if (c < cols - 2) link(i, this.idx(c + 2, r), 0.35);
-        if (r < rows - 2) link(i, this.idx(c, r + 2), 0.35);
+        if (c < cols - 2) link(i, this.idx(c + 2, r), 0.6);
+        if (r < rows - 2) link(i, this.idx(c, r + 2), 0.6);
+        if (c < cols - 2 && r < rows - 2) { link(i, this.idx(c + 2, r + 2), 0.3); link(this.idx(c + 2, r), this.idx(c, r + 2), 0.3); }
       }
       this.prev = this.p.map((x) => x.slice());
     }
     idx(c, r) { return r * this.cols + c; }
     // pins: [[index, position], ...]
+    // Physics: gravity, air resistance on every patch (the part that turns a fast towel into a board),
+    // a little internal damping (terry cloth doesn't ring like silk), stiff links.
     step(dt, pins, colliders, drag) {
-      const pinned = new Map(pins);
-      for (let i = 0; i < this.p.length; i++) {
-        if (pinned.has(i)) continue;
-        const p = this.p[i], q = this.q[i], vel = mul(sub(p, q), drag);
-        this.q[i] = p; this.p[i] = add(add(p, vel), v(0, G * dt * dt, 0));
+      const pinned = new Map(pins), n = this.p.length, cols = this.cols, rows = this.rows;
+      const AREAL = 0.6, RHO = 0.95, CD = 1.2, CF = 0.06; // kg/m² (damp terry), hot air kg/m³, flat-plate drag, skin friction
+      const mNode = AREAL * this.w * this.h / n;
+      const vel = this.p.map((p, i) => sub(p, this.q[i])); // per step
+      // air: per quad, the velocity of the patch against still air, split into normal and tangential parts
+      const acc = this.p.map(() => [0, G, 0]);
+      for (let r = 0; r < rows - 1; r++) for (let c = 0; c < cols - 1; c++) {
+        const ids = [this.idx(c, r), this.idx(c + 1, r), this.idx(c + 1, r + 1), this.idx(c, r + 1)], P = ids.map((i) => this.p[i]);
+        const nr = cross(sub(P[2], P[0]), sub(P[3], P[1])), A = len(nr) / 2; if (!A) continue;
+        const nu = mul(nr, 1 / (2 * A)), vq = mul(ids.reduce((s_, i) => add(s_, vel[i]), [0, 0, 0]), 1 / (4 * dt));
+        const vn = dot(vq, nu), vt = sub(vq, mul(nu, vn)), vtl = len(vt);
+        const F = add(mul(nu, -0.5 * RHO * CD * A * vn * Math.abs(vn)), mul(vt, -0.5 * RHO * CF * A * vtl));
+        for (const i of ids) { const a_ = mul(F, 0.25 / mNode); acc[i] = add(acc[i], a_); }
       }
+      for (let i = 0; i < n; i++) {
+        if (pinned.has(i)) continue;
+        let dv = mul(acc[i], dt * dt); const v0 = vel[i];
+        // drag can't reverse the motion within one step (keeps it stable at high speed)
+        const dl = len(dv), vl = len(v0); if (dl > vl + Math.abs(G) * dt * dt * 2) dv = mul(dv, (vl + Math.abs(G) * dt * dt * 2) / dl);
+        vel[i] = add(mul(v0, drag), dv);
+      }
+      // internal damping: each point's velocity leans a little towards its neighbours' (removes ringing, keeps waves)
+      const damp = 0.08, sm = vel.map((v_, i) => {
+        const c = i % cols, r = (i / cols) | 0; let s_ = [0, 0, 0], k = 0;
+        for (const [dc, dr] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const cc = c + dc, rr = r + dr; if (cc >= 0 && cc < cols && rr >= 0 && rr < rows) { s_ = add(s_, vel[this.idx(cc, rr)]); k++; } }
+        return add(mul(v_, 1 - damp), mul(s_, damp / k));
+      });
+      for (let i = 0; i < n; i++) { if (pinned.has(i)) continue; this.q[i] = this.p[i]; this.p[i] = add(this.p[i], sm[i]); }
       for (const [i, pos] of pins) { this.q[i] = this.p[i]; this.p[i] = pos.slice(); }
-      for (let it = 0; it < 10; it++) {
+      for (let it = 0; it < 14; it++) {
         for (const [a, b, rest, k] of this.links) {
           const pa = this.p[a], pb = this.p[b], d = sub(pb, pa), l = len(d) || 1e-6, diff = (l - rest) / l * k;
           const ia = pinned.has(a) ? 0 : 1, ib = pinned.has(b) ? 0 : 1, w = ia + ib; if (!w) continue;
@@ -144,9 +169,9 @@
       for (let i = 0; i < 120; i++) this.step(1 / 60, true);
     }
     // torso transform at phase ph
-    torso(ph) {
+    torso(ph, extra = 0) {
       const T = this.spec.torso, th = TAU * ph;
-      const tw = (T.tw || 0) * D2R * Math.sin(th + (T.tp || 0) * D2R), le = (T.le || 0) * D2R * Math.sin(th + (T.lp || 0) * D2R), be = (T.be || 0) * D2R * Math.sin(th + (T.bp || 0) * D2R);
+      const tw = ((T.tw || 0) * Math.sin(th + (T.tp || 0) * D2R) + extra) * D2R, le = (T.le || 0) * D2R * Math.sin(th + (T.lp || 0) * D2R), be = (T.be || 0) * D2R * Math.sin(th + (T.bp || 0) * D2R);
       const hip = v(0, B.hipY, 0);
       const f = (p) => add(hip, rotY(rotZ(rotX(sub(p, hip), be), -le), tw));
       const dir = (p) => rotY(rotZ(rotX(p, be), -le), tw);
@@ -157,8 +182,10 @@
       return o;
     }
     // where both hands are (body frame), the wrist twist, and the torso
-    pose(ph) {
-      const S = this.spec, T = this.torso(ph);
+    // slow back, fast forward: the loop runs at speed 1 + a·cos(2π(ph − hit)); fastest at the hit
+    warp(ph) { const a = this.spec.asym || 0, h = this.spec.hit || 0; return { ph: ((ph + a / TAU * (Math.sin(TAU * (ph - h)) + Math.sin(TAU * h))) % 1 + 1) % 1, rate: 1 + a * Math.cos(TAU * (ph - h)) }; }
+    pose(ph0) {
+      const S = this.spec, wp = this.warp(ph0), ph = wp.ph;
       let R, L, twR = 0, twL = 0;
       if (S.path) { R = S.path(ph, 1); L = S.path(ph, 2); }
       else {
@@ -172,7 +199,18 @@
       }
       const nudge = this.nudge || { R: [0, 0, 0], L: [0, 0, 0] };
       if (R) R = add(R, nudge.R); if (L) L = add(L, nudge.L);
-      return { T, R, L, twR, twL };
+      // two hands on one towel: pull apart at the fast part (tension), but never further than the towel allows
+      if (R && L && (S.grip === "spread" || S.grip === "edge") && this.cloth) {
+        const ax = sub(R, L), d = len(ax) || 1e-6, u = mul(ax, 1 / d), a = S.asym || 0;
+        const pull = (S.tension || 0) * (a > 0 ? Math.max(0, (wp.rate - 1) / a) : 1);
+        const maxD = (S.grip === "spread" ? this.cloth.w : this.cloth.h) * 0.97;
+        const nd = Math.min(maxD, d + 2 * pull), mid = mul(add(R, L), 0.5);
+        R = add(mid, mul(u, nd / 2)); L = sub(mid, mul(u, nd / 2));
+      }
+      // the body follows the hands a little: twist towards the side they are on
+      const side = clamp(((R ? R[0] : 0) + (L ? L[0] : 0)) / 2 / 0.45, -1, 1);
+      const T = this.torso(ph, side * (S.follow ?? 10));
+      return { T, R, L, twR, twL, rate: wp.rate };
     }
     // solve the arm: shoulder, elbow, hand (world). Elbows hang down when hands are low, open out when high.
     arm(T, side, target) {
@@ -181,26 +219,33 @@
         const e = add(sh, T.dir(v(side * 0.06, -B.upper, 0.02))), h = add(e, T.dir(v(side * 0.02, -B.fore, 0.08)));
         return { sh, el: e, hd: h };
       }
-      let tw = T.f(target), d = sub(tw, sh), l = len(d);
+      const lift = clamp((target[1] - B.shY) / 0.5, 0, 1) * 0.05; const sh2 = T.f(v(side * (B.shX - lift * 0.3), B.shY + lift, 0));
+      let tw = T.f(target), d = sub(tw, sh2), l = len(d); const sh_ = sh2;
       if (l > REACH) { d = mul(d, REACH / l); l = REACH; } if (l < 0.08) { d = v(0, -0.08, 0.02); l = 0.08; }
       const dirn = mul(d, 1 / l), x = (B.upper * B.upper - B.fore * B.fore + l * l) / (2 * l), r = Math.sqrt(Math.max(0, B.upper * B.upper - x * x));
       const u = clamp((tw[1] - sh[1]) / 0.3 + 0.3, 0, 1);
       const pole = T.dir(add(mul(v(side * 0.35, -1, -0.3), 1 - u), mul(v(side, -0.25, -0.2), u)));
       let pp = sub(pole, mul(dirn, dot(pole, dirn))), pl = len(pp) || 1;
-      const el = add(add(sh, mul(dirn, x)), mul(pp, r / pl));
-      return { sh, el, hd: add(sh, d) };
+      const el = add(add(sh_, mul(dirn, x)), mul(pp, r / pl));
+      return { sh: sh_, el, hd: add(sh_, d) };
     }
     pins(pose) {
       const S = this.spec, cl = this.cloth, T = pose.T;
       const aR = this.arm(T, 1, pose.R), aL = this.arm(T, -1, pose.L);
       this.arms = { R: aR, L: aL };
       const out = [];
-      const grip = (a, tw) => { // the wrist: a short stretch of the towel edge leaves the hand along the forearm, rolled by the twist
-        const fa = norm(sub(a.hd, a.el)), side0 = norm(cross(fa, v(0, 1, 0.001)));
-        return add(a.hd, mul(rotAxis(side0, fa, tw), cl.w / (cl.cols - 1)));
+      const grip = (a, tw) => { // the wrist: the edge leaves the hand the way the towel pulls it, turned only by changes of the twist
+        const fa = norm(sub(a.hd, a.el)), cur = sub(cl.p[cl.idx(1, 0)], a.hd), dtw = tw - (this.lastTw ?? tw); this.lastTw = tw;
+        const dir = len(cur) > 1e-4 ? norm(cur) : norm(cross(fa, v(0.3, 1, 0.2)));
+        return add(a.hd, mul(rotAxis(dir, fa, dtw), cl.w / (cl.cols - 1)));
       };
       if (S.grip === "corner") { out.push([cl.idx(0, 0), aR.hd]); out.push([cl.idx(1, 0), grip(aR, pose.twR)]); }
       else if (S.grip === "spread") { out.push([cl.idx(cl.cols - 1, 0), aR.hd]); if (pose.L) out.push([cl.idx(0, 0), aL.hd]); }
+      else if (S.grip === "spin") { // centre and the ring around it turn with the fingers
+        const ci = (cl.cols - 1) / 2 | 0, cj = (cl.rows - 1) / 2 | 0, hub = add(aR.hd, v(0, 0.05, 0)), ang = TAU * (S.spin || 1.5) * this.t;
+        const step = cl.w / (cl.cols - 1);
+        for (let dc = -1; dc <= 1; dc++) for (let dr = -1; dr <= 1; dr++) { const x = dc * step, z = dr * step, ca = Math.cos(ang), sa = Math.sin(ang); out.push([cl.idx(ci + dc, cj + dr), add(hub, v(x * ca - z * sa, 0, x * sa + z * ca))]); }
+      }
       else if (S.grip === "edge") { out.push([cl.idx(0, 0), aR.hd]); if (pose.L) out.push([cl.idx(0, cl.rows - 1), aL.hd]); }
       return out;
     }
@@ -218,7 +263,7 @@
         if (this.running) { this.t += h * this.speed; this.phase = ((this.t * this.spec.tempo) % 1 + 1) % 1; }
         const pose = this.pose(this.phase); this.lastPose = pose;
         const pins = this.pins(pose);
-        this.cloth.step(h, pins, this.colliders(), 0.998);
+        this.cloth.step(h, pins, this.colliders(), 0.9995);
       }
       if (!quiet) this.measure(dt);
     }
@@ -236,9 +281,16 @@
         if (Math.abs(vn) > 2.5 && Math.random() < 0.015 * Math.abs(vn) && this.particles.length < 160)
           this.particles.push({ p: ctr, v: mul(nu, vn * 0.45), life: 1 });
       }
-      const handV = this.lastHand ? len(sub(this.arms.R.hd, this.lastHand)) / dt : 0; this.lastHand = this.arms.R.hd;
       const k = 0.06;
-      this.meter.air += (air - this.meter.air) * k;
+      const handV = this.lastHand ? len(sub(this.arms.R.hd, this.lastHand)) / dt : 0; this.lastHand = this.arms.R.hd;
+      // spin about the vertical through the hand, how far the towel hangs below horizontal, and the speed it needs
+      { const hd = this.arms.R.hd, hv = this.prevHd ? mul(sub(hd, this.prevHd), 1 / dt) : [0, 0, 0]; this.prevHd = hd; let Lm = 0, I = 0, rs = [];
+        for (let i = 0; i < P.length; i++) { const rx = P[i][0] - hd[0], rz = P[i][2] - hd[2], r2 = rx * rx + rz * rz; if (r2 < 0.0025) continue; const vx = (P[i][0] - Q[i][0]) / dt - hv[0], vz = (P[i][2] - Q[i][2]) / dt - hv[2]; Lm += rz * vx - rx * vz; I += r2; rs.push([Math.sqrt(r2), hd[1] - P[i][1]]); }
+        const om = I ? Lm / I : 0; rs.sort((a, b) => b[0] - a[0]); const outer = rs.slice(0, Math.max(1, rs.length / 4 | 0));
+        const rOut = outer.reduce((s_, q) => s_ + q[0], 0) / outer.length, droop = Math.atan2(outer.reduce((s_, q) => s_ + q[1], 0) / outer.length, rOut) / D2R;
+        const need = Math.sqrt(9.81 / (Math.max(0.15, rOut * 0.7) * Math.tan(20 * D2R))) / TAU; // turns/s for ≤ 20° droop (conical pendulum)
+        this.meter.spin = (this.meter.spin || 0) + (Math.abs(om) / TAU - (this.meter.spin || 0)) * k; this.meter.need = need; this.meter.droop = (this.meter.droop || 0) + (droop - (this.meter.droop || 0)) * k; }
+            this.meter.air += (air - this.meter.air) * k;
       this.meter.open += ((area ? len(nsum) / area : 0) - this.meter.open) * k;
       this.meter.hand += (handV - this.meter.hand) * k;
       cl.prev = P.map((x) => x.slice());
@@ -420,7 +472,7 @@
   // sliders: [label, getter path, min, max, step, unit]
   function controlsList() {
     const S = lab.spec, rows = [[tr("Tempo (loops per second)", "Tempo (Schleifen pro Sekunde)"), ["", "tempo", null], 0.2, 2.5, 0.05, "/s"]];
-    if (S.path) return rows.concat([[tr("Hands up/down (both)", "Hände hoch/runter (beide)"), ["nudge", "R", 1], -0.4, 0.4, 0.01, "m"]]);
+    if (S.path) return rows.concat([[tr("Hands up/down (both)", "Hände hoch/runter (beide)"), ["nudge", "R", 1], -0.4, 0.4, 0.01, "m"], [tr("Slow back, fast forward", "Langsam zurück, schnell vor"), ["", "asym", null], 0, 0.85, 0.05, ""], [tr("Moment of the hit (in the loop)", "Moment des Schlags (in der Schleife)"), ["", "hit", null], 0, 1, 0.05, ""]]);
     const H = (h, title) => [
       [`${title}: ${tr("centre left–right", "Mitte links–rechts")}`, [h, "c", 0], -0.6, 0.6, 0.01, "m"], [`${title}: ${tr("centre height", "Mitte Höhe")}`, [h, "c", 1], 0.8, 2.1, 0.01, "m"], [`${title}: ${tr("centre forward", "Mitte vorne")}`, [h, "c", 2], -0.3, 0.7, 0.01, "m"],
       [`${title}: ${tr("swing left–right", "Schwung links–rechts")}`, [h, "a", 0], 0, 0.6, 0.01, "m"], [`${title}: ${tr("swing up–down", "Schwung hoch–runter")}`, [h, "a", 1], 0, 0.6, 0.01, "m"], [`${title}: ${tr("swing forward–back", "Schwung vor–zurück")}`, [h, "a", 2], 0, 0.6, 0.01, "m"],
@@ -428,13 +480,18 @@
       [`${title}: ${tr("timing up–down", "Timing hoch–runter")}`, [h, "p", 1], -180, 180, 5, "°"], [`${title}: ${tr("timing forward–back", "Timing vor–zurück")}`, [h, "p", 2], -180, 180, 5, "°"],
       [`${title}: ${tr("wrist twist", "Handgelenk drehen")}`, [h, "tw", null], 0, 180, 5, "°"], [`${title}: ${tr("wrist timing", "Handgelenk Timing")}`, [h, "tp", null], -180, 180, 5, "°"],
     ];
-    let out = rows.concat(H("R", tr("Right hand", "Rechte Hand")));
+    const timing = [[tr("Slow back, fast forward", "Langsam zurück, schnell vor"), ["", "asym", null], 0, 0.85, 0.05, ""], [tr("Moment of the hit (in the loop)", "Moment des Schlags (in der Schleife)"), ["", "hit", null], 0, 1, 0.05, ""]];
+    if (S.grip === "spread" || S.grip === "edge") timing.push([tr("Pull the hands apart at the hit", "Hände beim Schlag auseinanderziehen"), ["", "tension", null], 0, 0.15, 0.01, "m"]);
+    if (S.grip === "spin") timing.push([tr("Spin (turns per second)", "Drehung (Umdrehungen pro Sekunde)"), ["", "spin", null], 0, 4, 0.1, "/s"]);
+    timing.push([tr("Body follows the hands", "Körper folgt den Händen"), ["", "follow", null], 0, 25, 1, "°"]);
+    let out = rows.concat(timing, H("R", tr("Right hand", "Rechte Hand")));
     if (S.Lmode === "own") out = out.concat(H("L", tr("Left hand", "Linke Hand")));
     out = out.concat([[tr("Body twist", "Oberkörper drehen"), ["torso", "tw", null], 0, 40, 1, "°"], [tr("Body twist timing", "Drehen Timing"), ["torso", "tp", null], -180, 180, 5, "°"],
       [tr("Side lean", "Seitneigung"), ["torso", "le", null], 0, 20, 1, "°"], [tr("Forward bend", "Vorbeuge"), ["torso", "be", null], 0, 25, 1, "°"], [tr("Bend timing", "Beugen Timing"), ["torso", "bp", null], -180, 180, 5, "°"]]);
     return out;
   }
-  function getV(path) { if (path[0] === "nudge") return lab.nudge ? lab.nudge.R[1] : 0; return getP(lab.spec, path); }
+  const DEFV = { asym: 0, hit: 0, tension: 0, spin: 1.5, follow: 10 };
+  function getV(path) { if (path[0] === "nudge") return lab.nudge ? lab.nudge.R[1] : 0; const v_ = getP(lab.spec, path); return v_ == null ? DEFV[path[1]] ?? 0 : v_; }
   function setV(path, val) {
     if (path[0] === "nudge") { lab.nudge = lab.nudge || { R: [0, 0, 0], L: [0, 0, 0] }; lab.nudge.R[1] = val; lab.nudge.L[1] = val; return; }
     setP(lab.spec, path, val);
@@ -559,6 +616,9 @@
   function meters() {
     const m = lab.meter;
     $("#mAir").textContent = m.air.toFixed(2); $("#mOpen").textContent = Math.round(clamp(m.open, 0, 1) * 100) + "%"; $("#mHand").textContent = m.hand.toFixed(1);
+    const sp = m.spin || 0; $("#mSpin").textContent = sp > 0.15 ? `${sp.toFixed(1)}/s` : "–";
+    $("#mSpinInfo").textContent = sp > 0.15 ? tr(`needs ≥ ${m.need.toFixed(1)}/s to stay flat · hangs ${Math.round(m.droop)}°`, `braucht ≥ ${m.need.toFixed(1).replace(".", ",")}/s, um flach zu bleiben · hängt ${Math.round(m.droop)}°`) : tr("not spinning", "dreht nicht");
+    $("#bSpin").style.width = clamp(sp / Math.max(0.1, m.need || 1) * 50, 0, 100) + "%"; $("#bSpin").style.background = sp >= (m.need || 9) ? "#3f8f5a" : "";
     $("#bAir").style.width = clamp(m.air / 3 * 100, 0, 100) + "%"; $("#bOpen").style.width = clamp(m.open * 100, 0, 100) + "%"; $("#bHand").style.width = clamp(m.hand / 8 * 100, 0, 100) + "%";
   }
 
