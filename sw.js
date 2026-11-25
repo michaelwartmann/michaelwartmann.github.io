@@ -1,4 +1,4 @@
-const CACHE = "hub-v16";
+const CACHE = "hub-v17";
 const FILES = ["./", "index.html", "manifest.webmanifest", "apps/yoga.png", "apps/garden.png", "cyber-quest/assets/icon-192.png",
   "icons/icon-192.png", "icons/icon-512.png", "icons/favicon-64.png", "icons/apple-touch-icon.png"];
 self.addEventListener("install", e => e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES)).then(() => self.skipWaiting())));
