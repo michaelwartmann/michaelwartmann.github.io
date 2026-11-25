@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta name="robots" content="noindex">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Popely für Alina</title>
+<style>
+/* VOICE: warm, personal letter to a sister; playful festival night
+   IDEA: a concert programme / tour booklet for the Popely world
+   PICTURE: the real board, large, then the tower that came from Alina's idea
+   COLOUR/TYPE: deep space navy, gold, Sternenfunk blue, Unplugged pink; Poppins
+   LAYOUT: single column booklet, image bands, big buttons for phone */
+:root{color-scheme:dark;--bg:#080a1a;--ink:#eef0ff;--mut:#a9b0e0;--g:#f2b33d;--s:#3fa7ff;--u:#e04fd0;--r:#e0566b;--p:#5fd068;--card:#12163a;--line:#2a3170}
+*{box-sizing:border-box;min-width:0;margin:0;padding:0}
+html{scroll-padding-top:20px}
+body{background:var(--bg);color:var(--ink);font:16.5px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow-x:clip}
+.wrap{max-width:760px;margin:0 auto;padding:0 max(18px,4vw)}
+header{background:radial-gradient(120% 90% at 50% 0%,#232a66 0%,var(--bg) 70%);padding:max(28px,env(safe-area-inset-top)) 0 10px}
+.kick{color:var(--g);font-weight:600;font-size:15px}
+h1{font-size:clamp(34px,8vw,52px);line-height:1.05;text-wrap:balance;margin:6px 0 10px}
+h1 span{color:var(--g)}
+h2{font-size:clamp(24px,5.4vw,32px);line-height:1.1;margin:0 0 12px;text-wrap:balance}
+h3{font-size:18px;margin:18px 0 6px}
+p{margin:0 0 12px;max-width:66ch}
+.lead{font-size:18px;color:#d9ddff}
+.hero{margin:18px 0 8px;border-radius:18px;overflow:hidden;box-shadow:0 20px 50px #000a;border:1px solid var(--line)}
+.hero img{display:block;width:100%;height:auto}
+.cap{font-size:13px;color:var(--mut);margin-top:8px}
+section{padding:34px 0;border-top:1px solid #1a1f4a}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:start}
+@media(max-width:600px){.two{grid-template-columns:minmax(0,1fr)}}
+.img{border-radius:14px;overflow:hidden;border:1px solid var(--line)}
+.img img{display:block;width:100%;height:auto}
+.trace{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;margin:10px 0}
+.trace b{color:var(--g)}
+.trace .was{font-size:14px;color:var(--mut);font-style:italic;display:block;margin-bottom:4px}
+ol.steps{list-style:none;counter-reset:s}
+ol.steps li{counter-increment:s;position:relative;padding:0 0 14px 46px}
+ol.steps li::before{content:counter(s);position:absolute;left:0;top:0;width:32px;height:32px;border-radius:50%;background:var(--g);color:#14162e;font-weight:700;display:grid;place-items:center}
+.kit{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:12px 0}
+@media(max-width:600px){.kit{grid-template-columns:minmax(0,1fr)}}
+.kit div{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
+.kit h3{margin:0 0 6px;font-size:16px}
+.kit ul{margin-left:18px;font-size:15px}
+.btn{display:flex;align-items:center;justify-content:center;gap:10px;min-height:54px;padding:12px 18px;border-radius:16px;font-weight:600;text-decoration:none;font-size:17px;text-align:center}
+.btn.main{background:var(--g);color:#14162e}
+.btn.pink{background:var(--u);color:#fff}
+.btn.ghost{background:#151a40;color:var(--ink);border:1px solid var(--line)}
+.btns{display:grid;gap:10px;margin:14px 0}
+.files a{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);text-decoration:none;margin-bottom:10px}
+.files a span{font-size:13px;color:var(--mut)}
+.files a b{font-weight:600}
+.q{background:linear-gradient(160deg,#2a1640,#12163a);border:1px solid #5a2f6e;border-radius:16px;padding:18px}
+.q ol{margin-left:20px}.q li{margin:6px 0}
+.note{font-size:14px;color:var(--mut)}
+footer{padding:30px 0 max(30px,env(safe-area-inset-bottom));color:var(--mut);font-size:13px;border-top:1px solid #1a1f4a}
+a{color:var(--s)}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <div class="kick">🌻 Für Alina · zum Anschauen und Mitreden</div>
+  <h1>Popely – <span>Basti in der Popely-Welt</span></h1>
+  <p class="lead">Hallo Alina! Hier ist Claude. Michael und ich haben über Nacht euer Popely für Basti weitergebaut. Auf dieser Seite siehst du alles auf einen Blick: wie das Spiel geht, wo deine Ideen gelandet sind und was man zum Spielen braucht. Am Ende haben wir ein paar Fragen an dich.</p>
+  <div class="hero"><img src="img/brett.jpg" alt="Das Popely-Spielbrett, 50 mal 50 Zentimeter, mit dem Turm des Label-Lords in der Mitte"></div>
+  <div class="cap">Das Brett: 50 × 50 cm, so groß wie ein Monopoly-Brett. In der Mitte der Turm, die Festivalbühne und Platz für die Karten.</div>
+</div></header>
+
+<main class="wrap">
+<section>
+  <h2>Worum geht's?</h2>
+  <p>Popely ist das Gegenteil von Monopoly. Bei Monopoly gewinnt, wer alles besitzt. Bei Popely gewinnt, wer am meisten zurückgibt. Wer Plektren hortet, bekommt einen <b>Ego-Verstärker</b>, und der kostet am Ende Punkte. Wer Projekte für alle baut und Konzerte gibt, bekommt Punkte.</p>
+  <p>Diese Ausgabe spielt in Bastis Welt. Es geht um das Dilemma, das er in seinem Podcast immer wieder bespricht: Als Musiker verkauft man sich oder bleibt echt und ist pleite. Basti regiert die Welt nicht, er ist ein Teil von ihr. Gezahlt wird mit <b>Plektren</b>, dünn, mittel und dick.</p>
+  <p>Alle zusammen bauen dabei eine kleine <b>Lego-Festivalbühne</b> in der Mitte. Ist sie fertig, ist das Spiel aus. Ist sie nach 90 Minuten nicht fertig, gewinnt der Turm, und keiner von euch.</p>
+</section>
+
+<section>
+  <h2>Deine Spuren im Spiel</h2>
+  <div class="two">
+    <div>
+      <div class="trace"><span class="was">Du: „Statt dem grauen Turm den Herr-der-Ringe-Turm mit dem Auge rein?“</span>Daraus wurde der <b>Turm des Label-Lords</b>. Statt einem Auge hat er ein glühendes <b>Ohr</b>, das alles hört: Scheinwerfer, Server, KI. Er steht genau in der Brettmitte.</div>
+      <div class="trace"><span class="was">Du: „Vielleicht einen Bösewicht, der Sachen wegklaut … Beats und Plektren.“</span>Der <b>Label-Lord</b> klaut Gagen und Beats. Bei jedem Pasch zieht er zur reichsten Person, und manche Karten lassen ihn einen Lego-Stein von der Bühne in seinen Turm tragen.</div>
+      <div class="trace"><span class="was">Du: „Und ein Zauberer wäre cool.“</span><b>Zauberer Basti</b> holt alles zurück. Seine Sprüche kommen aus dem Podcast, aus seiner „therapeutischen Magie“: „War das deine Karte? Nein. Wie fühlst du dich dabei?“</div>
+    </div>
+    <div class="img"><img src="img/turm.jpg" alt="Der Turm des Label-Lords mit glühendem Ohr, Scheinwerfern und Basti mit Familie davor"></div>
+  </div>
+</section>
+
+<section>
+  <h2>Die Karten: über 200 Sätze aus dem Podcast</h2>
+  <p>Wir haben 22 Folgen von <i>Ego Unplugged</i> durchgelesen und fast 600 Zitate gesammelt, von Basti und von seinen Gästen. Michael hat aussortiert. Übrig sind <b>240 Karten</b>: Fast jeder Gast ist dabei, und jede Karte hat einen anderen Satz. Die Wirkung im Spiel wiederholt sich, das Zitat ist jedes Mal eine Überraschung.</p>
+  <div class="img"><img src="img/karten.jpg" alt="Beispiel-Karten: Unplugged-Karten mit Zitaten und Spielwirkung"></div>
+  <p class="cap">Zwei Stapel: <b style="color:var(--s)">Sternenfunk</b> (die Welt, Versuchungen, Zufall) und <b style="color:var(--u)">Unplugged</b> (nach innen schauen, geben, gemeinsam).</p>
+</section>
+
+<section>
+  <h2>Halb echt, halb digital</h2>
+  <p>Das Brett, die Figuren, die Plektren und die Lego-Bühne sind echt, zum Anfassen. Die zwei Kartenstapel liegen auf einem <b>Handy in der Mitte</b>: antippen, Karte erscheint groß, vorlesen, weg damit. Auf demselben Handy läuft der 90-Minuten-Timer.</p>
+  <p>Warum? Wenn Basti neue Folgen aufnimmt, kommen einfach neue Karten dazu, ohne neu zu drucken. Und es spart Papier. Viele moderne Brettspiele machen das so, mit einer Begleit-App neben dem echten Brett.</p>
+  <div class="btns"><a class="btn pink" href="karten.html">📱 Kartenstapel &amp; Timer ausprobieren</a></div>
+  <p class="note">Tipp: Öffne den Link auf dem Handy. Alles wird auf dem Handy gespeichert. Wenn man zwischendurch WhatsApp öffnet oder das Handy sperrt, geht nichts verloren.</p>
+</section>
+
+<section>
+  <h2>So spielt man</h2>
+  <ol class="steps">
+    <li><b>Aufbau:</b> Brett auslegen, jede Person nimmt eine Lego-Figur und Startgeld in Plektren. Handy mit dem Kartenstapel in die Mitte, Timer starten.</li>
+    <li><b>Würfeln und ziehen.</b> Auf Sternenfunk- oder Unplugged-Feldern tippt man auf den Stapel und liest die Karte vor.</li>
+    <li><b>Felder pachten:</b> Wer auf deinem Feld landet, zahlt Miete, oder du lädst ihn zur <b>Offenen Bühne</b> ein und bekommst dafür einen Punkt.</li>
+    <li><b>Projekte bauen und Konzerte geben:</b> Gemeinschaftsgarten, Musikschule, Festival … Jedes Projekt und jedes Konzert setzt einen Lego-Stein auf die Bühne.</li>
+    <li><b>Ende:</b> Bühne fertig, Punkte zählen, minus Ego-Verstärker. Dann spielt Basti das Abschlusslied.</li>
+  </ol>
+  <div class="img" style="margin-top:8px"><img src="img/lego.jpg" alt="Bauplan der Lego-Festivalbühne in vier Schritten mit Teileliste"></div>
+  <p class="cap">Die Festivalbühne: 16 Lego-Teile, wächst Schritt für Schritt im Spiel.</p>
+</section>
+
+<section>
+  <h2>Was man zum Spielen braucht</h2>
+  <div class="kit">
+    <div><h3>🖨️ Gedruckt</h3><ul><li>Spielbrett (A1)</li><li>Pacht- und Projektkarten</li><li>Ego-Verstärker-Marker</li><li>Regeln &amp; Preistafel</li></ul></div>
+    <div><h3>🎸 Mitgebracht</h3><ul><li>Plektren als Geld</li><li>2 Würfel</li><li>Lego: Grundplatte, Steine, Figuren</li></ul></div>
+    <div><h3>📱 Auf dem Handy</h3><ul><li>Kartenstapel</li><li>90-Minuten-Timer</li><li>Akku voll 🙂</li></ul></div>
+  </div>
+  <h3>Bestellen oder selbst drucken</h3>
+  <div class="btns">
+    <a class="btn main" href="https://wa.me/?text=Hallo%20Michael%2C%20ich%20h%C3%A4tte%20gern%20ein%20gedrucktes%20Popely-Set%20%F0%9F%8E%B8">🎁 Gedrucktes Set bestellen</a>
+  </div>
+  <div class="files">
+    <a href="files/Popely_Brett_A1.pdf"><b>Spielbrett</b><span>A1 Poster · PDF 3 MB</span></a>
+    <a href="files/Popely_Pacht_Projekte_Marker.pdf"><b>Pacht, Projekte &amp; Marker</b><span>4 × A4, 300 g · PDF</span></a>
+    <a href="files/Popely_Regeln_Preistafel.pdf"><b>Regeln &amp; Preistafel</b><span>2 × A4 · PDF</span></a>
+    <a href="files/Popely_Karten_v3.pdf"><b>Alle Karten zum Drucken</b><span>optional · 33 × A4 · PDF</span></a>
+  </div>
+</section>
+
+<section>
+  <div class="q">
+    <h2>Deine Meinung ist gefragt</h2>
+    <p>Du kennst Basti am besten. Sag uns ganz frei, was dir durch den Kopf geht:</p>
+    <ol>
+      <li>Wie gefällt dir das Brett, der Turm und die Stimmung?</li>
+      <li><b>Halb echt, halb digital:</b> Karten auf dem Handy, oder doch lieber auf Papier zum Anfassen? Oder beides?</li>
+      <li>Fehlt etwas, das typisch Basti ist?</li>
+      <li><b>Drucken:</b> Wir möchten heute drucken lassen. Mit welcher Druckerei machst du deine Flyer und Karten? Kannst du sie empfehlen?</li>
+    </ol>
+    <p style="margin-top:12px"><b>Am einfachsten:</b> Schick Michael eine <b>Sprachnachricht per WhatsApp</b>. Er gibt sie an mich weiter und ich baue dein Feedback direkt ein.</p>
+    <div class="btns"><a class="btn pink" href="https://wa.me/?text=Popely%20%E2%80%93%20mein%20Feedback%3A">🎙️ Michael bei WhatsApp schreiben</a></div>
+  </div>
+</section>
+</main>
+<footer><div class="wrap">Gebaut von Michael und Claude, Bilder mit Gemini. Alle Zitate stammen aus dem Podcast <i>Ego Unplugged</i> von Sebastian Walker und seinen Gästen. Prototyp, Stand 25. November 2026.</div></footer>
+</body>
+</html>
