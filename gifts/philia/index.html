@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>Philias Tornado-Märchen</title><meta name="theme-color" content="#fef3e0">
+<style>
+body{margin:0;background:#fef3e0;color:#222;font:17px/1.6 Georgia,serif;display:flex;min-height:100vh;align-items:center;justify-content:center}
+form{max-width:340px;width:100%;padding:24px}
+h1{font-family:"Courier New",monospace;letter-spacing:.06em;text-transform:uppercase;font-size:1.4rem;margin:0 0 4px}
+p{color:#5f5a4f;margin:0 0 18px}
+input[type=password]{width:100%;box-sizing:border-box;font-size:1.1rem;min-height:48px;padding:0 12px;border:2px solid #222;border-radius:4px;background:#fbf8ef}
+button{margin-top:12px;width:100%;min-height:48px;font:1rem "Courier New",monospace;border:2px solid #222;background:#222;color:#fef3e0;border-radius:4px;cursor:pointer}
+label{display:flex;gap:8px;align-items:center;margin-top:12px;font-size:.95rem;color:#5f5a4f}
+#msg{min-height:1.5em;color:#b4432c;margin-top:10px;font-family:"Courier New",monospace}
+input:focus-visible,button:focus-visible{outline:3px solid #2c5d8f;outline-offset:2px}
+</style></head><body>
+<form id="f"><h1 id="t1">Philias Tornado-Märchen</h1><p id="t2">Geschichten, die Philia für uns geschrieben hat. Bitte Passwort eingeben.</p>
+<input id="pw" type="password" autocomplete="current-password" aria-label="Passwort" required>
+<label><input id="keep" type="checkbox"> <span id="t3">Auf diesem Gerät merken</span></label>
+<button type="submit" id="t4">Öffnen</button><div id="msg" role="status" aria-live="polite"></div></form>
+<iframe id="v" title="Philia's Tornado Tales" hidden style="position:fixed;inset:0;width:100%;height:100%;border:0;background:#fff"></iframe>
+<script>
+let EN;try{EN=(localStorage.getItem("lang")||(navigator.language||"de").slice(0,2))!=="de"}catch(e){EN=!(navigator.language||"de").startsWith("de")}
+const W=EN?{t1:"Philia's Tornado Tales",t2:"Stories Philia wrote for us. Please enter the password.",t3:"Remember on this device",t4:"Open",busy:"Opening …",bad:"That password is not right."}:{busy:"Wird geöffnet …",bad:"Das Passwort stimmt nicht."};
+if(EN){for(const k of["t1","t2","t3","t4"])document.getElementById(k).textContent=W[k];document.documentElement.lang="en";document.title=W.t1}
+const SALT="RtLlQYiHjaYjiIqLiz9z8w==",ITER=250000;
+const b64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function key(pw){pw=pw.trim().toLowerCase().replace(/\s+/g,"");const k=await crypto.subtle.importKey("raw",new TextEncoder().encode(pw),"PBKDF2",false,["deriveKey"]);
+ return crypto.subtle.deriveKey({name:"PBKDF2",salt:b64(SALT),iterations:ITER,hash:"SHA-256"},k,{name:"AES-GCM",length:256},false,["decrypt"])}
+let P={},U={};const v=document.getElementById("v");
+function show(name){name=(name||"index.html").replace(/^.*\//,"");if(!P[name])name="index.html";
+ let h=P[name];for(const[f,u]of Object.entries(U))h=h.split('src="'+f+'"').join('src="'+u+'"');
+ v.srcdoc=h;if(location.hash.slice(1)!==name)history.pushState(null,"","#"+name)}
+v.onload=()=>{const d=v.contentDocument;if(!d)return;v.contentWindow.scrollTo(0,0);
+ d.addEventListener("click",e=>{const a=e.target.closest("a[href]");if(!a)return;const h=a.getAttribute("href");if(h==="#"||h===""){e.preventDefault();return}
+  if(/^[\w-]+\.html$/.test(h)){e.preventDefault();show(h)}
+  else if(/^https?:/.test(h)){e.preventDefault();window.open(h,"_blank","noopener")}})};
+addEventListener("popstate",()=>show(location.hash.slice(1)));
+async function open_(pw,keep){const msg=document.getElementById("msg");msg.textContent=W.busy;let data;
+ try{const k=await key(pw);const u=new Uint8Array(await (await fetch("tales.bin")).arrayBuffer());
+  data=JSON.parse(new TextDecoder().decode(await crypto.subtle.decrypt({name:"AES-GCM",iv:u.slice(0,12)},k,u.slice(12))))}
+ catch(e){msg.textContent=W.bad;return}
+ if(keep){try{localStorage.setItem("gifts-pw",pw)}catch(_){}}
+ P=data.pages;for(const[f,b]of Object.entries(data.imgs))U[f]=URL.createObjectURL(new Blob([b64(b)],{type:"image/jpeg"}));
+ document.getElementById("f").hidden=true;document.body.style.display="block";v.hidden=false;show(location.hash.slice(1))}
+document.getElementById("f").onsubmit=e=>{e.preventDefault();open_(document.getElementById("pw").value,document.getElementById("keep").checked)};
+try{const s=localStorage.getItem("gifts-pw");if(s)open_(s,false)}catch(_){}
+</script></body></html>
