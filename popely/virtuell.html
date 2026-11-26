@@ -101,6 +101,14 @@ input[type=text]{flex:1;min-height:48px;border-radius:12px;border:1px solid var(
 .sheet h2{font-size:19px;margin-bottom:6px}
 .sheet p{color:#d5d9f7;margin-bottom:10px}
 .sheet .opts{display:grid;gap:8px;margin-top:12px}
+.qa{background:#0c1030;border:1px solid var(--line);border-radius:14px;padding:12px 14px;margin:8px 0;font-size:16px;line-height:1.4}
+.qa b{display:block;font-size:12.5px;color:var(--mut);font-weight:600;margin-bottom:3px;letter-spacing:.04em}
+.qa.a{border-color:var(--c);display:flex;gap:10px;align-items:flex-start}
+.qa.a .av{width:40px;height:40px;border-radius:50%;flex:none;border:2px solid var(--c);background:#10142f center/cover}
+textarea{width:100%;min-height:70px;border-radius:12px;border:1px solid var(--line);background:#0c1030;color:var(--ink);font:inherit;padding:10px 12px;margin-top:6px}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.tags button{min-height:40px;padding:0 12px;border-radius:20px;border:1px solid var(--line);background:#1a1f45;font-size:14px}
+.alarm{border-color:var(--r)!important;box-shadow:0 0 30px #e0566b55}
 .sheet table{width:100%;border-collapse:collapse;font-size:14px}
 .sheet td{padding:5px 0;border-bottom:1px solid #1e2450;vertical-align:top}
 .sheet td:last-child{text-align:right;color:var(--g)}
@@ -179,11 +187,16 @@ input[type=text]{flex:1;min-height:48px;border-radius:12px;border:1px solid var(
 <div id="ov"><div id="slot"></div></div>
 
 <script src="karten-data.js"></script>
+<script src="fragen-data.js"></script>
 <script src="popely-engine.js"></script>
 <script>
 {
 'use strict';
-const P = self.Popely, CARDS = self.POPELY_CARDS, R = P.RULES;
+const P = self.Popely, CARDS = self.POPELY_CARDS, R = P.RULES, F = self.POPELY_FRAGEN;
+const pick = a => a[Math.floor(Math.random() * a.length)];
+const pick3 = a => a.slice().sort(() => Math.random() - 0.5).slice(0, 3);
+const npcId = p => G.players[p].npc && G.players[p].npc.id;
+function answer(p, th) { return pick(F.antworten[npcId(p)][th]); }
 const $ = id => document.getElementById(id);
 const KEY = 'popely-virtuell-v1', PREF = 'popely-virtuell-pref';
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -297,7 +310,8 @@ function say(p, html) {
   $('log').innerHTML = head + `<span>${html}</span>`;
 }
 const N = p => `<b>${esc(G.players[p].name)}</b>`;
-const wait = ms => new Promise(r => setTimeout(r, fast ? Math.min(ms * 0.3, 260) : ms));
+const TEST = /[?&]test\b/.test(location.search);
+const wait = ms => new Promise(r => setTimeout(r, TEST ? 0 : fast ? Math.min(ms * 0.3, 260) : ms));
 function alive(g) { if (g !== gen) throw new Error('stale'); }
 
 // ---------- Fenster ----------
@@ -325,7 +339,7 @@ function showCard(c, p, canVeto) {
     const vb = canVeto !== null ? '<button class="alt" data-v="veto">🃏 Liebevoll widersprechen</button>' : '';
     sheet(cardHtml(c, human ? 'Du ziehst eine Karte' : `${esc(q.name)} zieht eine Karte`, vb + '<button class="done" data-v="ok">Weiter</button>'), true);
     $('slot').onclick = e => { const b = e.target.closest('button[data-v]'); if (b) fin(b.dataset.v); };
-    if (!human && canVeto === null) timer = setTimeout(() => fin('ok'), fast ? 1300 : 3200);
+    if (!human && canVeto === null) timer = setTimeout(() => fin('ok'), TEST ? 10 : fast ? 1300 : 3200);
   });
 }
 
@@ -353,12 +367,61 @@ async function ask(p, kind, d) {
       r = await choose('Zwei plus zwei ist fünf', `Baut zusammen ${pr.i} ${esc(pr.n)}: jeder zahlt ${pl(d.half)}, beide bekommen den vollen Punkt.`, G.players[p].pl < d.half ? [{ l: 'Ich habe zu wenig Plektren', v: null }] : o.concat([{ l: 'Lieber nicht', v: null }])); break; }
     case 'partnerOk': { const pr = P.PROJECTS[d.id];
       r = await choose(`${esc(G.players[d.from].name)} fragt dich`, `Wollen wir zusammen ${pr.i} ${esc(pr.n)} bauen? Jeder zahlt etwa ${pl(d.half)}, beide bekommen 1 Punkt.`, [{ l: 'Ja, gern', sub: pl(R.klein.cost - d.half), v: true, main: true }, { l: 'Nein', v: false }]); break; }
-    case 'gefuehl': r = await choose('Gefühlsführerschein', 'Sag laut in einem Satz, wie du dich gerade fühlst. Die anderen hören zu.', [{ l: 'Gesagt. Der Tisch nickt', sub: '+1 ⭐', v: true, main: true }], true); break;
-    case 'frage': r = await choose('Echte Frage', `Stell ${esc(G.players[d.left].name)} eine echte Frage. (Laut. Eine Antwort bekommst du in der nächsten Version.)`, [{ l: 'Gefragt', sub: 'beide +1 ⭐', v: true, main: true }], true); break;
+    case 'gefuehl': r = await feelingDialog(p); break;
+    case 'frage': r = await askDialog(p, d.left); break;
+    case 'gefragt': r = await askedDialog(p, d.from); break;
+    case 'alarmCall': r = await choose(`🚨 Ego-Alarm für ${esc(G.players[d.t].name)}?`, `${esc(G.players[d.t].name)} ${esc(d.text)}. Willst du Ego-Alarm rufen? Der Tisch stimmt ab. Mehrheit dafür: ${esc(G.players[d.t].name)} bekommt 1 Ego-Verstärker. Sonst bekommst du ihn. (Einmal pro Runde.)`,
+      [{ l: 'Lass gut sein', v: false, main: true }, { l: '🚨 Ego-Alarm!', v: true }], true); break;
+    case 'alarmVote': r = await choose(`🚨 ${esc(G.players[d.caller].name)} ruft Ego-Alarm`, `Gegen ${esc(G.players[d.t].name)}: ${esc(d.text)}. Verdient das einen Ego-Verstärker?`,
+      [{ l: 'Ja, verdient', v: true }, { l: 'Nein, lass gut sein', v: false }], true); break;
+    case 'lineup': { const pr = P.PROJECTS[d.id], q = G.players[p], max = Math.min(d.need, q.pl);
+      const band = d.band.map(i => esc(G.players[i].name)).join(', ');
+      const am = [10, 20, 30].filter(x => x < max).map(x => ({ l: `Mit ${pl(x)} einsteigen`, v: x })).concat([{ l: max === d.need ? `Den Rest zahlen: ${pl(max)}` : `Mit allem einsteigen: ${pl(max)}`, v: max }, { l: 'Diesmal nicht', v: 0, main: true }]);
+      r = await choose(`🎪 Festival-Lineup: ${pr.i} ${esc(pr.n)}`, `${band} ${d.band.length > 1 ? 'stehen' : 'steht'} schon auf der Bühne und ${d.band.length > 1 ? 'laden' : 'lädt'} dich ein. Eingezahlt: ${d.paid}/${R.mega.cost}. Wenn es fertig ist: ${R.mega.pts} Punkte nach Anteil, dazu für jede Person +${R.lineupBonus} Punkt je weiterem Musiker auf der Bühne. Ab ${R.lineupExtraBrick} Musikern: 1 Baustein extra.`, am); break; }
     case 'action': r = await actionMenu(p, d); break;
   }
   alive(g);
   return r;
+}
+function feelingDialog(p) {
+  return new Promise(res => {
+    sheet(`<div class="sheet"><h2>💬 Gefühlsführerschein</h2><p>Sag in einem Satz, wie du dich gerade fühlst. Tippen oder einfach laut sagen.</p>
+      <div class="tags">${pick3(F.gefuehle).concat(pick3(F.gefuehle)).filter((x, i, a) => a.indexOf(x) === i).slice(0, 5).map(g => `<button data-g="${esc(g)}">${esc(g)}</button>`).join('')}</div>
+      <textarea id="fz" maxlength="140" placeholder="Ich fühle mich gerade …"></textarea>
+      <div class="opts"><button class="btn main" id="fok">Gesagt</button></div></div>`, true);
+    $('slot').onclick = e => { const g = e.target.closest('[data-g]'); if (g) { $('fz').value = 'Ich fühle mich gerade ' + g.dataset.g + '.'; } };
+    $('fok').onclick = async () => {
+      const txt = $('fz').value.trim();
+      const re = G.players.map((q, i) => i).filter(i => !G.players[i].human).map(i => `<div class="qa a" style="--c:${col(i)}"><div class="av" style="background-image:url(img/npc/${npcId(i)}.jpg)"></div><span>${esc(pick(F.antworten.reaktion[npcId(i)]))}</span></div>`).join('');
+      sheet(`<div class="sheet"><h2>💬 ${txt ? '„' + esc(txt) + '“' : 'Du hast es laut gesagt.'}</h2>${re}<p style="margin-top:10px">Der Tisch nickt: <b>+1 ⭐</b></p><div class="opts"><button class="btn main" id="fok2">Weiter</button></div></div>`, true);
+      $('fok2').onclick = () => { closeSheet(); res(true); };
+    };
+  });
+}
+function askDialog(p, left) {
+  return new Promise(res => {
+    const qs = pick3(F.fragen), who = G.players[left];
+    const done = q => {
+      const ans = who.human ? '' : `<div class="qa a" style="--c:${col(left)}"><div class="av" style="background-image:url(img/npc/${npcId(left)}.jpg)"></div><span><b>${esc(who.name.toUpperCase())}</b>${esc(answer(left, q.th))}</span></div>`;
+      sheet(`<div class="sheet"><h2>❓ Echte Frage an ${esc(who.name)}</h2><div class="qa"><b>DU FRAGST</b>${esc(q.q)}</div>${ans}<p style="margin-top:10px">Ehrlich geantwortet: <b>beide +1 ⭐</b></p><div class="opts"><button class="btn main" id="qok">Weiter</button></div></div>`, true);
+      $('qok').onclick = () => { closeSheet(); res(true); };
+    };
+    sheet(`<div class="sheet"><h2>❓ Echte Frage an ${esc(who.name)}</h2><p>Stell eine echte Frage, so wie Basti im Podcast. Such dir eine aus oder schreib deine eigene.</p>
+      <div class="opts">${qs.map((q, i) => `<button class="btn" data-q="${i}"><span>${esc(q.q)}</span></button>`).join('')}</div>
+      <textarea id="qz" maxlength="160" placeholder="Oder deine eigene Frage …"></textarea>
+      <div class="opts"><button class="btn main" id="qown">Eigene Frage stellen</button></div></div>`, true);
+    $('slot').onclick = e => { const b = e.target.closest('[data-q]'); if (b) { $('slot').onclick = null; done(qs[+b.dataset.q]); } };
+    $('qown').onclick = () => { const t = $('qz').value.trim(); if (!t) { $('qz').focus(); return; } $('slot').onclick = null; done({ q: t, th: pick(['ego', 'erfolg', 'musik', 'krise']) }); };
+  });
+}
+function askedDialog(p, from) {
+  return new Promise(res => {
+    const q = pick(F.fragen), who = G.players[from];
+    sheet(`<div class="sheet"><h2>❓ ${esc(who.name)} fragt dich</h2><div class="qa a" style="--c:${col(from)}"><div class="av" style="background-image:url(img/npc/${npcId(from)}.jpg)"></div><span><b>${esc(who.name.toUpperCase())} FRAGT</b>${esc(q.q)}</span></div>
+      <p>Antworte ehrlich, laut oder hier.</p><textarea id="az" maxlength="200" placeholder="Meine Antwort …"></textarea>
+      <div class="opts"><button class="btn main" id="aok">Ehrlich geantwortet</button></div></div>`, true);
+    $('aok').onclick = () => { closeSheet(); res(true); };
+  });
 }
 function mainButton(label) {
   return new Promise(res => { $('acts').innerHTML = `<button class="btn main" id="mb">${label}</button>`; $('mb').onclick = () => { $('acts').innerHTML = ''; res(true); }; pending = () => res(true); });
@@ -411,7 +474,7 @@ async function emit(ev) {
       await wait(1300); break;
     case 'move': {
       const n = P.FIELDS.length;
-      if (reduce) placeTok(ev.p, ev.to); else for (let s = 1; s <= ev.steps; s++) { placeTok(ev.p, (ev.from + s) % n); await wait(150); alive(g); }
+      if (reduce) placeTok(ev.p, ev.to); else for (let s = 1; s <= ev.steps; s++) { placeTok(ev.p, (ev.from + s) % n); if (!TEST) await wait(150); alive(g); }
       const f = P.FIELDS[ev.to]; $('dice').hidden = true;
       say(ev.p, `${me(ev.p) ? 'Du landest' : N(ev.p) + ' landet'} auf ${f.i} <b>${esc(f.n)}</b>${f.s ? ' ' + '★'.repeat(f.s) : ''}.`);
       render(); await wait(600); break; }
@@ -433,7 +496,20 @@ async function emit(ev) {
     case 'gain': render(); bump(ev.p); say(ev.p, `+${ev.n} 🎸 für ${N(ev.p)}.`); await wait(700); break;
     case 'amp': render(); bump(ev.p); say(ev.p, ev.n > 0 ? `${me(ev.p) ? 'Du nimmst' : N(ev.p) + ' nimmt'} 1 Ego-Verstärker 🔊.` : `${me(ev.p) ? 'Du legst' : N(ev.p) + ' legt'} 1 Ego-Verstärker ab.`); await wait(1000); break;
     case 'nothing': say(ev.p, ev.why ? `Nichts passiert (${esc(ev.why)}).` : 'Nichts passiert.'); await wait(700); break;
-    case 'say': say(ev.p, ev.kind === 'gefuehl' ? `${N(ev.p)} sagt, wie es gerade geht. Der Tisch nickt.` : `${N(ev.p)} stellt ${N(ev.left)} eine echte Frage.`); await wait(1300); break;
+    case 'say': {
+      if (ev.kind === 'gefuehl') { const t = pick(F.antworten.gefuehl[npcId(ev.p)]); say(ev.p, `💬 ${N(ev.p)}: „${esc(t)}“`); await wait(2600); }
+      else { const q = pick(F.fragen), a = answer(ev.left, q.th);
+        say(ev.p, `❓ ${N(ev.p)} fragt ${N(ev.left)}: „${esc(q.q)}“`); await wait(2600); alive(g);
+        say(ev.left, `${N(ev.left)}: „${esc(a)}“`); await wait(3000); }
+      break; }
+    case 'alarm': render(); say(ev.caller, `🚨 ${me(ev.caller) ? 'Du rufst' : N(ev.caller) + ' ruft'} <b>Ego-Alarm</b>: ${me(ev.target) ? 'du' : N(ev.target)} ${esc(ev.text)}!`); await wait(1800); break;
+    case 'alarmresult': {
+      UI.stats[ev.who].alarm = (UI.stats[ev.who].alarm || 0) + 1; render(); bump(ev.who);
+      const vt = Object.keys(ev.votes).filter(k => +k !== ev.caller).map(k => `${esc(G.players[k].name)} ${ev.votes[k] ? '👍' : '👎'}`).join(' · ');
+      say(ev.passed ? ev.target : ev.caller, ev.passed ? `🔊 Der Tisch sagt ja (${vt}). ${me(ev.target) ? 'Du bekommst' : N(ev.target) + ' bekommt'} einen Ego-Verstärker.` : `😄 Der Tisch sagt nein (${vt}). ${me(ev.caller) ? 'Du bekommst' : N(ev.caller) + ' bekommt'} den Ego-Verstärker selbst.`);
+      await wait(2600); break; }
+    case 'lineupjoin': render(); bump(ev.p); say(ev.p, `🎪 ${me(ev.p) ? 'Du steigst' : N(ev.p) + ' steigt'} ins Festival-Lineup ein: ${pl(ev.n)} (${ev.paid}/${R.mega.cost}).`); await wait(1300); break;
+    case 'lineupno': say(ev.p, `${me(ev.p) ? 'Du steigst' : N(ev.p) + ' steigt'} diesmal nicht ein.`); await wait(900); break;
     case 'aurora': render(); say(null, '👶 Aurora lacht. Alle bekommen 1 Gehalt.'); await wait(1200); break;
     case 'joined': render(); say(null, ev.who.length ? `${ev.who.map(N).join(', ')} ${ev.who.length === 1 ? 'macht' : 'machen'} mit.${!ev.jam && ev.who.length < 2 ? ' Zu wenige: der Label-Lord bleibt.' : ''}` : 'Niemand macht mit.'); await wait(1300); break;
     case 'declined': say(ev.p, `${N(ev.p)} sagt nein.`); await wait(1000); break;
@@ -471,7 +547,7 @@ function endScreen() {
   const rk = P.ranking(G), won = G.over === 'buehne';
   say(null, won ? '🎉 Die Festivalbühne steht!' : '🗼 Die Zeit ist um. Der Turm gewinnt.');
   const rows = rk.map((r, k) => { const s = UI.stats[r.i];
-    return `<div class="${won && k === 0 ? 'win' : ''}" style="--c:${col(r.i)}">${avatar(r.i, 'av')}<span>${esc(r.name)}<small>${r.pts} ⭐ − ${R.egoMalus * r.amp} (🔊 ${r.amp}) · 🧱 ${r.bricks}</small><small>Offene Bühne ${s.buehne}× · Miete ${s.miete}× · Projekte ${s.proj} · Konzerte ${s.konz}${s.tempt ? ' · Verlockung ' + s.tempt + '×' : ''}</small></span><b>${r.score}</b></div>`; }).join('');
+    return `<div class="${won && k === 0 ? 'win' : ''}" style="--c:${col(r.i)}">${avatar(r.i, 'av')}<span>${esc(r.name)}<small>${r.pts} ⭐ − ${R.egoMalus * r.amp} (🔊 ${r.amp}) · 🧱 ${r.bricks}</small><small>Offene Bühne ${s.buehne}× · Miete ${s.miete}× · Projekte ${s.proj} · Konzerte ${s.konz}${s.tempt ? ' · Verlockung ' + s.tempt + '×' : ''}${s.alarm ? ' · 🚨 ' + s.alarm + '×' : ''}</small></span><b>${r.score}</b></div>`; }).join('');
   sheet(`<div class="sheet"><h2>${won ? '🎉 Die Festivalbühne steht!' : '🗼 Der Turm gewinnt'}</h2>
    <p>${won ? `Ihr habt den Label-Lord gemeinsam besiegt. Am meisten zurückgegeben hat <b>${esc(rk[0].name)}</b>.${G.players[rk[0].i].human ? ' Glückwunsch!' : ''} Jetzt spielt Basti das Abschlusslied.` : `Die Bühne ist nach ${G.maxRounds} Runden nicht fertig (${G.stage} von ${G.goal} Bausteinen). Niemand gewinnt. Mehr geben, weniger nehmen?`}</p>
    <div class="rank">${rows}</div><div class="opts"><button class="btn main" id="ng">Neues Spiel</button><button class="btn" id="cl" style="justify-content:center">Brett ansehen</button></div></div>`, true);
@@ -498,6 +574,8 @@ $('help').onclick = () => info(`<h2>Regeln und Preise</h2>
  <tr><td>Konzert (1× pro Zug)</td><td>${R.konzert.cost} → ${R.konzert.pts} ⭐ + 🧱</td></tr>
  <tr><td>Werkstatt-Feld</td><td>${R.werkstattBaustein} → 🧱</td></tr><tr><td>Projekt-Feld</td><td>Projekt ${R.projektFeldRabatt} billiger</td></tr>
  <tr><td>Pasch</td><td>Label-Lord klaut der reichsten Person 1 Gage</td></tr>
+ <tr><td>🎪 Festival-Lineup</td><td>Wer in ein Mega-Projekt einzahlt, lädt alle ein. +${R.lineupBonus} ⭐ je weiterem Musiker, ab ${R.lineupExtraBrick} Musikern 1 🧱 extra</td></tr>
+ <tr><td>🚨 Ego-Alarm</td><td>Bei egoistischen Momenten darf jemand rufen (1× pro Runde). Mehrheit: 1 🔊 für die Person, sonst für den Rufer</td></tr>
  <tr><td>Bühne fertig</td><td>${G.goal} Bausteine</td></tr></table>
  <p class="hint" style="margin-top:10px">Die Zahlen sind für das virtuelle Spiel abgestimmt und weichen von der gedruckten Preistafel ab: Gehalt, Konzert, Bausteine pro Person, Rendite und Mega-Projekte, 15 Runden.</p>`);
 $('board').onclick = e => {
@@ -516,7 +594,8 @@ const LEGEND = `<h2>Was bedeuten die Zeichen?</h2><table>
  <tr><td>🔊 Ego-Verstärker</td><td>Bekommst du, wenn du mit über ${R.egoGrenze} Plektren am Start vorbeikommst. Jeder kostet am Ende ${R.egoMalus} Punkte.</td></tr>
  <tr><td>🧱 Bausteine</td><td>Wie viele Steine du auf die Festivalbühne gesetzt hast</td></tr>
  <tr><td>🃏 Karten</td><td>Behaltene Karten zum späteren Ausspielen</td></tr>
- <tr><td>🦹 Label-Lord</td><td>Klaut bei Pasch der reichsten Person 1 Gage</td></tr></table>`;
+ <tr><td>🦹 Label-Lord</td><td>Klaut bei Pasch der reichsten Person 1 Gage</td></tr>
+ <tr><td>🚨 Ego-Alarm</td><td>Der Tisch stimmt ab, ob jemand gerade einen Ego-Verstärker verdient hat</td></tr></table>`;
 $('legend').onclick = () => info(LEGEND);
 $('chips').onclick = e => { const b = e.target.closest('[data-p]'); if (!b) return; const p = +b.dataset.p, q = G.players[p];
   info(`<h2>${esc(q.name)}</h2><table><tr><td>🎸 Plektren (Geld)</td><td>${q.pl}</td></tr><tr><td>⭐ Punkte</td><td>${q.pts}</td></tr><tr><td>🔊 Ego-Verstärker</td><td>${q.amp} (−${R.egoMalus * q.amp} Punkte am Ende)</td></tr><tr><td>🧱 Bausteine gesetzt</td><td>${q.bricks}</td></tr><tr><td>Punkte jetzt</td><td>${P.score(q)}</td></tr><tr><td>Gepachtet</td><td>${Object.keys(G.leases).filter(k => G.leases[k].o === p).map(k => esc(P.FIELDS[k].n)).join(', ') || '–'}</td></tr></table>`); };

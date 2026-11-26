@@ -17,6 +17,9 @@
     werkstattBaustein: 10,   // Annahme: auf der Werkstatt 1 Baustein für 1 Gage
     projektFeldRabatt: 5,    // Annahme: auf dem Projekt-Feld legt die Bank 5 Plektren dazu
     bausteineProPerson: n => 3,
+    lineupBonus: 1,          // Festival-Lineup: +1 Punkt je weiterem Musiker auf der Bühne (alle Beteiligten)
+    lineupExtraBrick: 3,     // ab so vielen Musikern: 1 Baustein extra
+    alarmProRunde: 1,        // jede Person darf einmal pro Runde Ego-Alarm rufen
     maxRunden: 15            // statt 90 Minuten: so viele Tischrunden, dann gewinnt der Turm
   };
 
@@ -185,6 +188,14 @@
     if (budget < 10 || !chance(G, q, (1 - n.e) * (0.9 - 0.35 * n.m) + pr * 0.3)) return 0;
     return Math.min(need, Math.floor(budget * (0.5 + 0.4 * (1 - n.e)) / 5) * 5);
   }
+  function lineupAmount(G, p, id, from) {
+    const q = G.players[p], n = q.npc, pr = pressure(G);
+    const need = RULES.mega.cost - megaPaid(G, id), budget = q.pl - cushion(q);
+    if (budget < 10) return 0;
+    const k = G.kind[p + '>' + from] || 0;
+    if (!chance(G, q, (1 - n.e) * 0.75 + (1 - n.m) * 0.15 + pr * 0.25 + k * 0.06 * (0.5 + n.r))) return 0;
+    return Math.min(need, Math.max(10, Math.floor(budget * (0.35 + 0.45 * (1 - n.e)) / 5) * 5));
+  }
   function megaPaid(G, id) { const m = G.mega[id] || {}; return Object.values(m).reduce((a, b) => a + b, 0); }
 
   // Was der NPC nach dem Ziehen tut (Projekt, Konzert, Werkstatt, Mega)
@@ -225,7 +236,7 @@
   const emit = (io, ev) => io.emit ? io.emit(ev) : undefined;
 
   async function placeBrick(G, io, p, why) {
-    G.stage++; G.players[p].bricks++;
+    G.stage++; G.players[p].bricks++; G.players[p].builtLap = true;
     await emit(io, { t: 'brick', p, why });
     if (G.stage >= G.goal && !G.ending) { G.ending = true; await emit(io, { t: 'lastbrick', p }); }
   }
@@ -255,12 +266,15 @@
   async function passStart(G, io, p) {
     const q = G.players[p];
     const ego = q.pl > RULES.egoGrenze;
+    const hoard = extreme(G, 'pl', true) === p && q.pl >= 40 && !q.builtLap && q.laps > 0;
+    q.builtLap = false;
     const div = dividend(G, p);
     q.pl += RULES.gehalt + div; q.laps++;
     if (ego) q.amp++;
     const ended = [];
     for (const k of Object.keys(G.leases)) if (G.leases[k].o === p && --G.leases[k].left <= 0) { delete G.leases[k]; ended.push(+k); }
     await emit(io, { t: 'start', p, div, ego, ended });
+    if (hoard) await egoMoment(G, io, p, 'horten');
   }
 
   async function moveBy(G, io, p, steps) {
@@ -282,7 +296,57 @@
     refill(G);
     await emit(io, { t: 'project', p, id, shares, pts: ptsMap });
     for (const k of Object.keys(ptsMap)) await addPts(G, io, +k, ptsMap[k], 'projekt');
-    for (let b = 0; b < RULES[PROJECTS[id].size].bricks; b++) await placeBrick(G, io, p, 'projekt');
+    const extra = G.lineupBrick ? 1 : 0; G.lineupBrick = false;
+    for (let b = 0; b < RULES[PROJECTS[id].size].bricks + extra; b++) await placeBrick(G, io, p, 'projekt');
+  }
+
+  // ---------- Ego-Alarm ----------
+  // Ein Moment, in dem jemand egoistisch handelt. Wer will, ruft Ego-Alarm, der Tisch stimmt ab.
+  // Mehrheit dafür: die Person bekommt 1 Ego-Verstärker. Sonst bekommt ihn, wer gerufen hat.
+  const MOMENTS = {
+    miete: 'nimmt Miete von jemandem, der weniger hat',
+    verlockung: 'nimmt das Geld der Verlockung',
+    angebot: 'nimmt das große Angebot des Label-Lords an',
+    abseits: 'ist am reichsten und macht nicht mit',
+    nein: 'sagt nein zum gemeinsamen Projekt',
+    horten: 'kommt als Reichste/r am Start vorbei und hat diese Runde nichts gebaut',
+    lineup: 'ist reich und steigt nicht ins Festival-Lineup ein'
+  };
+  function npcCallAlarm(G, c, t, why) {
+    const n = G.players[c].npc, k = G.kind[c + '>' + t] || 0;
+    const base = 0.12 + (1 - n.e) * 0.22 - k * 0.08 * (0.5 + n.r) + (why === 'miete' || why === 'horten' ? 0 : 0.05);
+    return chance(G, G.players[c], base);
+  }
+  function npcVote(G, v, t, c, why) {
+    const n = G.players[v].npc, kt = G.kind[v + '>' + t] || 0, kc = G.kind[v + '>' + c] || 0;
+    return chance(G, G.players[v], 0.45 + (1 - n.e) * 0.2 - kt * 0.12 + kc * 0.06 - (n.e > 0.6 ? 0.15 : 0));
+  }
+  async function egoMoment(G, io, t, why) {
+    if (!G.alarm) G.alarm = {};
+    const order = others(G, t);
+    let caller = null;
+    for (const c of order) {
+      if (G.alarm[c] === G.round) continue;
+      const q = G.players[c];
+      const call = q.human ? await io.ask(c, 'alarmCall', { t, why, text: MOMENTS[why] }) : npcCallAlarm(G, c, t, why);
+      if (call) { caller = c; break; }
+    }
+    if (caller === null) return;
+    G.alarm[caller] = G.round;
+    await emit(io, { t: 'alarm', caller, target: t, why, text: MOMENTS[why] });
+    let yes = 1, no = 0; const votes = { [caller]: true };
+    for (const v of order) {
+      if (v === caller) continue;
+      const q = G.players[v];
+      const y = q.human ? await io.ask(v, 'alarmVote', { t, caller, why, text: MOMENTS[why] }) : npcVote(G, v, t, caller, why);
+      votes[v] = !!y; if (y) yes++; else no++;
+    }
+    const passed = yes > no;
+    const who = passed ? t : caller;
+    G.players[who].amp++;
+    if (passed) { note(G, t, caller, -1); } else { note(G, caller, t, -1); note(G, t, caller, -2); }
+    for (const v of Object.keys(votes)) if (+v !== caller) note(G, t, +v, votes[v] ? -1 : 1);
+    await emit(io, { t: 'alarmresult', caller, target: t, passed, yes, no, votes, who });
   }
 
   async function drawCard(G, io, p, d) {
@@ -314,10 +378,10 @@
       case 'Einfach machen': return 'again';
       case 'Musikerleben': pay(G, p, g); await emit(io, { t: 'pay', p, n: g, why: 'Sprit' }); await addPts(G, io, p, 1, c.t); break;
       case 'Verlockung':
-        if (await decide(G, io, p, 'verlockung', { card: c })) { q.pl += 2 * g; q.amp++; await emit(io, { t: 'tempt', p, yes: true, n: 2 * g, amp: 1 }); }
+        if (await decide(G, io, p, 'verlockung', { card: c })) { q.pl += 2 * g; q.amp++; await emit(io, { t: 'tempt', p, yes: true, n: 2 * g, amp: 1 }); await egoMoment(G, io, p, 'verlockung'); }
         else await emit(io, { t: 'tempt', p, yes: false }); break;
       case 'Das große Angebot':
-        if (await decide(G, io, p, 'angebot', { card: c })) { q.pl += 4 * g; q.amp += 2; await emit(io, { t: 'tempt', p, yes: true, n: 4 * g, amp: 2 }); }
+        if (await decide(G, io, p, 'angebot', { card: c })) { q.pl += 4 * g; q.amp += 2; await emit(io, { t: 'tempt', p, yes: true, n: 4 * g, amp: 2 }); await egoMoment(G, io, p, 'angebot'); }
         else { await emit(io, { t: 'tempt', p, yes: false }); await addPts(G, io, p, 1, c.t); } break;
       case 'Knopf gedrückt':
         if (q.pl >= g && (await decide(G, io, p, 'knopf', { card: c })) === 'pay') { pay(G, p, g); await emit(io, { t: 'pay', p, n: g, why: 'bleibt wach' }); }
@@ -348,7 +412,9 @@
         await addPts(G, io, p, 1, c.t); break;
       case 'Echte Frage': {
         const left = (p + 1) % G.players.length;
-        if (q.human) await io.ask(p, 'frage', { card: c, left }); else await emit(io, { t: 'say', p, kind: 'frage', left });
+        if (q.human) await io.ask(p, 'frage', { card: c, left });
+        else if (G.players[left].human) await io.ask(left, 'gefragt', { card: c, from: p });
+        else await emit(io, { t: 'say', p, kind: 'frage', left });
         note(G, left, p, 1); note(G, p, left, 1);
         await addPts(G, io, p, 1, c.t); await addPts(G, io, left, 1, c.t); break;
       }
@@ -369,6 +435,7 @@
           if (G.players[o].pl >= g && await decide(G, io, o, 'join', { card: c, jam, drawer: p })) { pay(G, o, g); inn.push(o); }
         }
         await emit(io, { t: 'joined', who: inn, jam });
+        { const rich = extreme(G, 'pl', true); if (!inn.includes(rich) && G.players[rich].pl >= 3 * g) await egoMoment(G, io, rich, 'abseits'); }
         if (jam) { for (const o of inn) await addPts(G, io, o, 1, c.t); if (inn.length >= 2) { inn.forEach(a => inn.forEach(b => a !== b && note(G, a, b, 1))); await placeBrick(G, io, inn.includes(p) ? p : inn[0], 'jam'); } }
         else if (inn.length >= 2) { for (const o of inn) await addPts(G, io, o, 1, c.t); await lordHome(G, io, false); }
         break;
@@ -380,7 +447,7 @@
         const partner = await decide(G, io, p, 'partner', { card: c, half, id });
         if (partner === null || partner === undefined || q.pl < half) { await emit(io, { t: 'nothing', p }); break; }
         const ok = G.players[partner].human ? await io.ask(partner, 'partnerOk', { card: c, half, id, from: p }) : npcDecide(G, partner, 'partnerOk', { half });
-        if (!ok) { await emit(io, { t: 'declined', p: partner, by: p }); note(G, p, partner, -1); break; }
+        if (!ok) { await emit(io, { t: 'declined', p: partner, by: p }); note(G, p, partner, -1); await egoMoment(G, io, partner, 'nein'); break; }
         pay(G, p, half); pay(G, partner, RULES.klein.cost - half); note(G, p, partner, 1); note(G, partner, p, 1);
         await finishProject(G, io, p, id, { [p]: half, [partner]: RULES.klein.cost - half }, { [p]: 1, [partner]: 1 }); break;
       }
@@ -416,8 +483,10 @@
             if (o.amp > 0) { o.amp--; await emit(io, { t: 'open', o: L.o, guest: p, field: q.pos, amp: true }); }
             else { await emit(io, { t: 'open', o: L.o, guest: p, field: q.pos }); await addPts(G, io, L.o, 1, 'buehne'); }
           } else {
+            const poorer = q.pl < G.players[L.o].pl;
             const x = pay(G, p, RULES.miete[f.s - 1]); G.players[L.o].pl += x; note(G, p, L.o, -1);
             await emit(io, { t: 'rent', o: L.o, guest: p, field: q.pos, n: x });
+            if (poorer && canOpen) await egoMoment(G, io, L.o, 'miete');
           }
         }
         break;
@@ -465,13 +534,31 @@
       const m = (G.mega[act.id] = G.mega[act.id] || {}); m[p] = (m[p] || 0) + amt;
       Object.keys(m).forEach(k => { if (+k !== p) { note(G, +k, p, 1); note(G, p, +k, 1); } });
       await emit(io, { t: 'megapay', p, id: act.id, n: amt, paid: megaPaid(G, act.id) });
+      // Festival-Lineup: die anderen werden eingeladen, sofort einzusteigen
+      for (let k = 1; k < G.players.length && megaPaid(G, act.id) < RULES.mega.cost; k++) {
+        const o = (p + k) % G.players.length, qo = G.players[o];
+        const need2 = RULES.mega.cost - megaPaid(G, act.id);
+        if (qo.pl < 5) continue;
+        let a2 = qo.human ? await io.ask(o, 'lineup', { id: act.id, from: p, need: need2, paid: megaPaid(G, act.id), band: Object.keys(m).map(Number) })
+                          : lineupAmount(G, o, act.id, p);
+        a2 = Math.min(need2, qo.pl, Math.max(0, a2 | 0));
+        if (a2 > 0) {
+          pay(G, o, a2); m[o] = (m[o] || 0) + a2;
+          Object.keys(m).forEach(x => { if (+x !== o) { note(G, +x, o, 1); note(G, o, +x, 1); } });
+          await emit(io, { t: 'lineupjoin', p: o, id: act.id, n: a2, paid: megaPaid(G, act.id) });
+        } else {
+          await emit(io, { t: 'lineupno', p: o, id: act.id });
+          if (qo.pl >= 50 && extreme(G, 'pl', true) === o) await egoMoment(G, io, o, 'lineup');
+        }
+      }
       if (megaPaid(G, act.id) >= RULES.mega.cost) {
         // Punkte nach Anteil (größter Rest)
         const tot = RULES.mega.cost, P13 = RULES.mega.pts, ks = Object.keys(m);
         const raw = ks.map(k => m[k] / tot * P13), fl = raw.map(Math.floor);
         let rest = P13 - fl.reduce((a, b) => a + b, 0);
         ks.map((k, i) => [raw[i] - fl[i], i]).sort((a, b) => b[0] - a[0]).forEach(([, i]) => { if (rest > 0) { fl[i]++; rest--; } });
-        const pm = {}; ks.forEach((k, i) => pm[k] = fl[i]);
+        const pm = {}; ks.forEach((k, i) => pm[k] = fl[i] + RULES.lineupBonus * (ks.length - 1));
+        if (ks.length >= RULES.lineupExtraBrick) G.lineupBrick = true;
         await finishProject(G, io, p, act.id, Object.assign({}, m), pm);
       }
     } else if (act.a === 'concert' && !T.concert && q.pl >= RULES.konzert.cost) {
@@ -535,6 +622,6 @@
 
   async function run(G, io) { while (!G.over) await playTurn(G, io); return ranking(G); }
 
-  const api = { RULES, FIELDS, PROJECTS, NPCS, AUTOPILOT, newGame, playTurn, run, ranking, score, megaPaid, actionOptions, dividend };
+  const api = { MOMENTS, RULES, FIELDS, PROJECTS, NPCS, AUTOPILOT, newGame, playTurn, run, ranking, score, megaPaid, actionOptions, dividend };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Popely = api;
 })(typeof self !== 'undefined' ? self : this);
