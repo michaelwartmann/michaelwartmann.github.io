@@ -70,15 +70,17 @@ input[type=text]{flex:1;min-height:48px;border-radius:12px;border:1px solid var(
 #dice.roll span{animation:shake .35s}
 @keyframes shake{25%{transform:rotate(-14deg) scale(1.15)}75%{transform:rotate(12deg) scale(1.1)}}
 
-#log{min-height:44px;padding:6px 12px;font-size:15px;display:flex;align-items:center;gap:8px}
+#log{min-height:48px;padding:6px 12px;font-size:16px;display:flex;align-items:center;gap:8px}
 #log img,#log .me{width:30px;height:30px;border-radius:50%;flex:none;border:2px solid var(--c);display:grid;place-items:center;font-size:16px;background:#10142f}
 .chips{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:0 8px}
-.chip{background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:6px 4px;text-align:center;font-size:12px;position:relative}
+.chip{background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:6px 4px;text-align:center;font-size:13.5px;position:relative;font-family:inherit;color:inherit}
 .chip.act{border-color:var(--c);box-shadow:0 0 12px color-mix(in srgb,var(--c) 45%,transparent)}
 .chip .av{width:34px;height:34px;border-radius:50%;margin:0 auto 2px;border:2px solid var(--c);background:#10142f center/cover;display:grid;place-items:center;font-size:18px}
-.chip .nm{font-weight:600;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip .nm{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .chip .st{font-variant-numeric:tabular-nums;color:#dfe3ff;line-height:1.35}
 .chip .st b{color:var(--g)}
+.chips>button{background:none;border:0;padding:0;font:inherit;color:inherit;text-align:inherit}
+.legend{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 12px;font-size:13px;color:var(--mut);padding:6px 8px 0;background:none;border:0;width:100%}
 .chip.bump{animation:bump .4s}
 @keyframes bump{50%{transform:scale(1.07)}}
 #acts{padding:10px 10px 14px;display:grid;gap:8px;margin-top:auto}
@@ -170,6 +172,7 @@ input[type=text]{flex:1;min-height:48px;border-radius:12px;border:1px solid var(
   <div id="board" role="img" aria-label="Spielbrett"></div>
   <div id="log" aria-live="polite"></div>
   <div class="chips" id="chips"></div>
+  <button class="legend" id="legend" aria-label="Was bedeuten die Zeichen?"><span>🎸 Plektren (Geld)</span><span>⭐ Punkte</span><span>🔊 Ego-Verstärker</span><span>🧱 Bausteine</span></button>
   <div id="acts"></div>
 </div>
 
@@ -285,7 +288,7 @@ function render(newBrick) {
   if (G.lordAt !== null) { const [x, y] = tokXY(G.lordAt, G.players[G.lordAt].pos); lx = x + (x > 50 ? -5 : 5); ly = y + (y > 50 ? -5 : 5); }
   L.style.left = lx + '%'; L.style.top = ly + '%';
   // Spieler
-  $('chips').innerHTML = G.players.map((q, p) => `<div class="chip${p === G.turn && !G.over ? ' act' : ''}" id="chip${p}" style="--c:${col(p)}">${avatar(p, 'av')}<div class="nm">${esc(q.name)}</div><div class="st">🎸 <b>${q.pl}</b> · ⭐ <b>${q.pts}</b><br>🔊 ${q.amp} · 🧱 ${q.bricks}${q.kept.length ? ' · 🃏 ' + q.kept.length : ''}</div></div>`).join('');
+  $('chips').innerHTML = G.players.map((q, p) => `<button class="chip" data-p="${p}" aria-label="${esc(q.name)}: ${q.pl} Plektren, ${q.pts} Punkte, ${q.amp} Ego-Verstärker, ${q.bricks} Bausteine"><div class="chip${p === G.turn && !G.over ? ' act' : ''}" id="chip${p}" style="--c:${col(p)}">${avatar(p, 'av')}<div class="nm">${esc(q.name)}</div><div class="st">🎸 <b>${q.pl}</b> · ⭐ <b>${q.pts}</b><br>🔊 ${q.amp} · 🧱 ${q.bricks}${q.kept.length ? ' · 🃏 ' + q.kept.length : ''}</div></div></button>`).join('');
   G.players.forEach((q, p) => { const t = $('tok' + p); t.classList.toggle('act', p === G.turn && !G.over); t.classList.toggle('zz', q.auto); });
 }
 function bump(p) { const c = $('chip' + p); if (c) { c.classList.remove('bump'); void c.offsetWidth; c.classList.add('bump'); } }
@@ -506,6 +509,17 @@ $('board').onclick = e => {
   const T = { start: 'Wer vorbeikommt, bekommt Gehalt.', S: 'Zieh eine Sternenfunk-Karte: die Welt, Versuchungen, Zufall.', U: 'Zieh eine Unplugged-Karte: nach innen schauen, geben, gemeinsam.', steuer: '1 Gage an die Bank.', pause: 'Einfach ausruhen.', werkstatt: `Hier kannst du für ${pl(R.werkstattBaustein)} einen Baustein für die Bühne bauen.`, autopilot: 'Nur zuschauen. Wer hierher geschickt wird, setzt aus oder zahlt 1 Gage.', projekt: `Hier baust du ein Projekt ${R.projektFeldRabatt} Plektren billiger.`, goauto: 'Ab in den Autopilot!' };
   info(`<h2>${f.i} ${esc(f.n)}</h2><p>${f.t === 'pacht' ? `${'★'.repeat(f.s)} · ${esc(f.g)}. Pacht ${pl(R.pacht[f.s - 1])} für ${R.pachtRunden} Runden, Miete ${pl(R.miete[f.s - 1])} oder Offene Bühne.<br>${L ? `Gepachtet von <b>${esc(G.players[L.o].name)}</b> (noch ${L.left}× am Start vorbei).` : 'Frei.'}` : T[f.t]}</p>`);
 };
+
+const LEGEND = `<h2>Was bedeuten die Zeichen?</h2><table>
+ <tr><td>🎸 Plektren</td><td>Das Geld im Spiel</td></tr>
+ <tr><td>⭐ Punkte</td><td>Für Projekte, Konzerte, Offene Bühne. Wer am Ende die meisten hat, gewinnt.</td></tr>
+ <tr><td>🔊 Ego-Verstärker</td><td>Bekommst du, wenn du mit über ${R.egoGrenze} Plektren am Start vorbeikommst. Jeder kostet am Ende ${R.egoMalus} Punkte.</td></tr>
+ <tr><td>🧱 Bausteine</td><td>Wie viele Steine du auf die Festivalbühne gesetzt hast</td></tr>
+ <tr><td>🃏 Karten</td><td>Behaltene Karten zum späteren Ausspielen</td></tr>
+ <tr><td>🦹 Label-Lord</td><td>Klaut bei Pasch der reichsten Person 1 Gage</td></tr></table>`;
+$('legend').onclick = () => info(LEGEND);
+$('chips').onclick = e => { const b = e.target.closest('[data-p]'); if (!b) return; const p = +b.dataset.p, q = G.players[p];
+  info(`<h2>${esc(q.name)}</h2><table><tr><td>🎸 Plektren (Geld)</td><td>${q.pl}</td></tr><tr><td>⭐ Punkte</td><td>${q.pts}</td></tr><tr><td>🔊 Ego-Verstärker</td><td>${q.amp} (−${R.egoMalus * q.amp} Punkte am Ende)</td></tr><tr><td>🧱 Bausteine gesetzt</td><td>${q.bricks}</td></tr><tr><td>Punkte jetzt</td><td>${P.score(q)}</td></tr><tr><td>Gepachtet</td><td>${Object.keys(G.leases).filter(k => G.leases[k].o === p).map(k => esc(P.FIELDS[k].n)).join(', ') || '–'}</td></tr></table>`); };
 document.addEventListener('keydown', e => { if ((e.key === ' ' || e.key === 'Enter') && e.target === document.body) { const b = $('mb'); if (b) { e.preventDefault(); b.click(); } } });
 
 drawSetup();
