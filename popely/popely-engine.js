@@ -304,7 +304,8 @@
   // Ein Moment, in dem jemand egoistisch handelt. Wer will, ruft Ego-Alarm, der Tisch stimmt ab.
   // Mehrheit dafür: die Person bekommt 1 Ego-Verstärker. Sonst bekommt ihn, wer gerufen hat.
   const MOMENTS = {
-    miete: 'nimmt Miete von jemandem, der weniger hat',
+    miete: 'nimmt Miete statt Offener Bühne',
+    makler: 'pachtet schon das dritte Feld',
     verlockung: 'nimmt das Geld der Verlockung',
     angebot: 'nimmt das große Angebot des Label-Lords an',
     abseits: 'ist am reichsten und macht nicht mit',
@@ -314,7 +315,7 @@
   };
   function npcCallAlarm(G, c, t, why) {
     const n = G.players[c].npc, k = G.kind[c + '>' + t] || 0;
-    const base = 0.12 + (1 - n.e) * 0.22 - k * 0.08 * (0.5 + n.r) + (why === 'miete' || why === 'horten' ? 0 : 0.05);
+    const base = 0.42 + (1 - n.e) * 0.3 - k * 0.08 * (0.5 + n.r) + (why === 'miete' || why === 'horten' ? 0 : 0.05);
     return chance(G, G.players[c], base);
   }
   function npcVote(G, v, t, c, why) {
@@ -473,6 +474,7 @@
           if (q.pl >= price && await decide(G, io, p, 'lease', { field: q.pos, price })) {
             pay(G, p, price); G.leases[q.pos] = { o: p, left: RULES.pachtRunden, open: 0 };
             await emit(io, { t: 'lease', p, field: q.pos, price });
+            if (Object.values(G.leases).filter(l => l.o === p).length >= 3) await egoMoment(G, io, p, 'makler');
           }
         } else if (L.o !== p) {
           const canOpen = L.open !== G.round;
@@ -486,7 +488,7 @@
             const poorer = q.pl < G.players[L.o].pl;
             const x = pay(G, p, RULES.miete[f.s - 1]); G.players[L.o].pl += x; note(G, p, L.o, -1);
             await emit(io, { t: 'rent', o: L.o, guest: p, field: q.pos, n: x });
-            if (poorer && canOpen) await egoMoment(G, io, L.o, 'miete');
+            if (canOpen) await egoMoment(G, io, L.o, 'miete');
           }
         }
         break;
