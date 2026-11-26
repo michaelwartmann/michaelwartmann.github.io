@@ -9,12 +9,15 @@
     // 4 Bausteine pro Person – damit wurde die Bühne in der Simulation nie fertig (das Geld reicht nicht).
     start: 75, gehalt: 20, gage: 10, egoGrenze: 50, egoMalus: 2,
     pacht: [5, 8, 12, 16], miete: [1, 1, 2, 2], pachtRunden: 2,
-    klein: { cost: 15, pts: 1 }, mittel: { cost: 50, pts: 5 }, mega: { cost: 125, pts: 13 },
-    konzert: { cost: 10, pts: 1 },
+    // Geduld soll sich lohnen (27.11.): große Projekte bringen Rendite bei jedem Start-Durchgang (nach Anteil),
+    // Mega-Projekte setzen 3 Bausteine, Konzerte sind etwas teurer.
+    klein: { cost: 15, pts: 1, bricks: 1, div: 0 }, mittel: { cost: 50, pts: 6, bricks: 1, div: 5 }, mega: { cost: 100, pts: 20, bricks: 3, div: 8 },
+    divAll: 1,               // +1 Plektrum am Start für jedes fertige Projekt auf dem Tisch (alle)
+    konzert: { cost: 15, pts: 1 },
     werkstattBaustein: 10,   // Annahme: auf der Werkstatt 1 Baustein für 1 Gage
     projektFeldRabatt: 5,    // Annahme: auf dem Projekt-Feld legt die Bank 5 Plektren dazu
     bausteineProPerson: n => 3,
-    maxRunden: 12            // statt 90 Minuten: so viele Tischrunden, dann gewinnt der Turm
+    maxRunden: 15            // statt 90 Minuten: so viele Tischrunden, dann gewinnt der Turm
   };
 
   // 30 Felder, im Uhrzeigersinn ab Start (unten rechts)
@@ -137,7 +140,12 @@
   }
   const score = q => q.pts - RULES.egoMalus * q.amp;
   function pressure(G) { return clamp(G.round / G.maxRounds - G.stage / G.goal, 0, 1); }
-  function dividend(G) { return G.done.length; } // Preistafel: pro fertigem Projekt auf dem Tisch
+  function dividend(G, p) { // Preistafel: +divAll pro fertigem Projekt; dazu Rendite für eigene Projekte (div, nach Anteil)
+    let d = G.done.length * RULES.divAll;
+    for (const x of G.done) { const pr = PROJECTS[x.id], tot = Object.values(x.shares).reduce((a, b) => a + b, 0);
+      if (x.shares[p]) d += Math.round(RULES[pr.size].div * x.shares[p] / tot); }
+    return d;
+  }
 
   // ---------- NPC-Entscheidungen ----------
   function chance(G, q, base) { return rnd(G) < clamp(base + (rnd(G) - 0.5) * q.npc.z, 0.02, 0.98); }
@@ -274,7 +282,7 @@
     refill(G);
     await emit(io, { t: 'project', p, id, shares, pts: ptsMap });
     for (const k of Object.keys(ptsMap)) await addPts(G, io, +k, ptsMap[k], 'projekt');
-    await placeBrick(G, io, p, 'projekt');
+    for (let b = 0; b < RULES[PROJECTS[id].size].bricks; b++) await placeBrick(G, io, p, 'projekt');
   }
 
   async function drawCard(G, io, p, d) {
