@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta name="robots" content="noindex">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Popely – Virtuell</title>
+<style>
+:root{color-scheme:dark;--bg:#070917;--ink:#eef0ff;--mut:#a9b0e0;--g:#f2b33d;--s:#3fa7ff;--u:#e04fd0;--r:#e0566b;--p:#5fd068;--card:#12163a;--line:#2a3170;
+ --c0:#f2b33d;--c1:#3fa7ff;--c2:#e04fd0;--c3:#5fd068;--c4:#ff8a4c;--c5:#9b8cff}
+*{box-sizing:border-box;min-width:0;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;overflow-x:clip}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,a:focus-visible{outline:3px solid #fff;outline-offset:2px}
+[hidden]{display:none!important}
+
+/* ---------- Setup ---------- */
+#setup{max-width:560px;margin:0 auto;padding:max(20px,env(safe-area-inset-top)) 18px max(24px,env(safe-area-inset-bottom))}
+#setup h1{font-size:clamp(30px,8vw,44px);letter-spacing:.03em;line-height:1.05}
+#setup h1 span{display:block;font-size:.45em;color:var(--g);letter-spacing:0;margin-top:6px}
+#setup h2{font-size:17px;margin:22px 0 8px}
+#setup p{color:var(--mut);font-size:15px}
+.back{color:var(--mut);text-decoration:none;font-size:14px;display:inline-block;padding:6px 0;margin-bottom:6px}
+.field{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+input[type=text]{flex:1;min-height:48px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;padding:0 14px}
+.emo{display:flex;gap:6px;flex-wrap:wrap}
+.emo button{width:48px;height:48px;border-radius:12px;border:2px solid var(--line);background:var(--card);font-size:24px}
+.emo button[aria-pressed=true]{border-color:var(--g);background:#2a2440}
+.opps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.opp{border:3px solid transparent;border-radius:16px;background:none;padding:0;text-align:center;opacity:.55}
+.opp img{display:block;width:100%;height:auto;aspect-ratio:1;border-radius:13px}
+.opp span{display:block;font-size:14px;padding:4px 0 6px}
+.opp[aria-pressed=true]{border-color:var(--g);opacity:1;background:#1a1f45}
+.seg{display:flex;gap:8px;flex-wrap:wrap}
+.seg button{min-height:44px;padding:0 14px;border-radius:22px;border:1px solid var(--line);background:var(--card);font-size:14px}
+.seg button[aria-pressed=true]{background:var(--g);color:#14162e;border-color:var(--g);font-weight:600}
+.big{display:block;width:100%;min-height:58px;border:0;border-radius:16px;background:var(--g);color:#14162e;font-weight:700;font-size:18px;margin-top:22px}
+.big.ghost{background:var(--card);color:var(--ink);border:1px solid var(--line);margin-top:10px}
+.big:disabled{opacity:.45}
+.hint{font-size:13px;color:var(--mut);margin-top:8px}
+
+/* ---------- Spiel ---------- */
+#game{display:flex;flex-direction:column;min-height:100%;max-width:560px;margin:0 auto;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+.top{display:flex;align-items:center;gap:8px;padding:6px 10px;font-size:14px}
+.top .pill{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:5px 10px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.top .sp{flex:1}
+.top button{min-width:44px;min-height:44px;border-radius:12px;border:1px solid var(--line);background:var(--card);font-size:17px}
+#board{position:relative;width:100%;aspect-ratio:1;background:#0b0e22 url(img/brett.jpg) center/100% 100% no-repeat;user-select:none;touch-action:manipulation}
+.fld{position:absolute;background:none;border:0;border-radius:4px}
+.fld.cur{box-shadow:inset 0 0 0 2px #fff}
+.lease{position:absolute;width:3.4%;height:3.4%;border-radius:50%;border:1.5px solid #000a;transform:translate(-50%,-50%);pointer-events:none;box-shadow:0 0 6px currentColor}
+.tok{position:absolute;width:6.6%;height:6.6%;border-radius:50%;transform:translate(-50%,-50%);border:2px solid var(--c);background:#10142f center/cover;display:grid;place-items:center;font-size:clamp(11px,3.4vw,20px);line-height:1;pointer-events:none;box-shadow:0 2px 6px #000c;transition:left .13s linear,top .13s linear;z-index:3}
+.tok.act{box-shadow:0 0 0 3px #fff,0 0 14px var(--c);z-index:4}
+.tok.zz{filter:grayscale(1) brightness(.7)}
+#lord{position:absolute;width:6%;height:6%;transform:translate(-50%,-50%);display:grid;place-items:center;font-size:clamp(13px,4vw,24px);pointer-events:none;transition:left .5s,top .5s;z-index:5;filter:drop-shadow(0 0 6px #e0566b)}
+#stage{position:absolute;left:38.3%;top:40%;width:23.4%;height:22.6%;display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:1fr;gap:4%;padding:1.2%;pointer-events:none}
+#stage i{border-radius:14%;border:1px dashed #ffffff3d}
+#stage i.on{border:0;background:var(--c);box-shadow:inset 0 -3px 0 #0005,inset 0 2px 0 #fff5}
+#stage i.new{animation:pop .5s ease-out}
+@keyframes pop{from{transform:scale(2.2);opacity:.2}to{transform:none;opacity:1}}
+#loot{position:absolute;left:50%;top:31%;transform:translate(-50%,-50%);font-size:clamp(9px,2.6vw,14px);background:#000a;border:1px solid var(--r);color:#ffd9de;border-radius:10px;padding:1px 7px;white-space:nowrap;pointer-events:none}
+.pj{position:absolute;left:70.9%;width:12.2%;height:17%;border-radius:6%;background:#0c1030ee;border:1.5px solid var(--p);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2%;overflow:hidden}
+.pj b{font-size:clamp(14px,4.4vw,26px);line-height:1.1}
+.pj span{font-size:clamp(6.5px,1.75vw,10.5px);line-height:1.12;color:#d8ffe0;hyphens:auto;overflow-wrap:anywhere;max-width:100%}
+.pj em{font-style:normal;font-size:clamp(8px,2.2vw,12px);color:var(--g);font-weight:700}
+.pj .bar{position:absolute;left:0;bottom:0;height:8%;background:var(--p)}
+#dice{position:absolute;left:50%;top:76%;transform:translate(-50%,-50%);display:flex;gap:6px;pointer-events:none;z-index:6}
+#dice span{min-width:clamp(30px,9vw,46px);height:clamp(30px,9vw,46px);border-radius:10px;background:#101a4e;border:2px solid var(--g);color:var(--g);display:grid;place-items:center;font-weight:700;font-size:clamp(16px,5vw,24px);box-shadow:0 4px 12px #000a}
+#dice.roll span{animation:shake .35s}
+@keyframes shake{25%{transform:rotate(-14deg) scale(1.15)}75%{transform:rotate(12deg) scale(1.1)}}
+
+#log{min-height:44px;padding:6px 12px;font-size:15px;display:flex;align-items:center;gap:8px}
+#log img,#log .me{width:30px;height:30px;border-radius:50%;flex:none;border:2px solid var(--c);display:grid;place-items:center;font-size:16px;background:#10142f}
+.chips{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:0 8px}
+.chip{background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:6px 4px;text-align:center;font-size:12px;position:relative}
+.chip.act{border-color:var(--c);box-shadow:0 0 12px color-mix(in srgb,var(--c) 45%,transparent)}
+.chip .av{width:34px;height:34px;border-radius:50%;margin:0 auto 2px;border:2px solid var(--c);background:#10142f center/cover;display:grid;place-items:center;font-size:18px}
+.chip .nm{font-weight:600;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip .st{font-variant-numeric:tabular-nums;color:#dfe3ff;line-height:1.35}
+.chip .st b{color:var(--g)}
+.chip.bump{animation:bump .4s}
+@keyframes bump{50%{transform:scale(1.07)}}
+#acts{padding:10px 10px 14px;display:grid;gap:8px;margin-top:auto}
+.btn{min-height:48px;border-radius:14px;border:1px solid var(--line);background:var(--card);padding:8px 14px;font-size:16px;text-align:left;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.btn small{color:var(--mut);font-size:13px;white-space:nowrap}
+.btn.main{background:var(--g);color:#14162e;border:0;font-weight:700;font-size:18px;justify-content:center;min-height:58px}
+.btn:disabled{opacity:.4}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.wait{color:var(--mut);text-align:center;font-size:14px;padding:16px 0}
+
+/* ---------- Fenster ---------- */
+#ov{position:fixed;inset:0;background:#05060fd9;display:none;align-items:flex-end;justify-content:center;z-index:20;padding:12px}
+#ov.on{display:flex}
+#ov.mid{align-items:center}
+#slot{width:min(100%,460px);display:flex;justify-content:center}
+.sheet{width:min(100%,460px);max-height:92vh;overflow:auto;background:#12163a;border:1px solid var(--line);border-radius:20px;padding:18px;animation:up .22s ease-out}
+@keyframes up{from{transform:translateY(24px);opacity:.3}to{transform:none;opacity:1}}
+.sheet h2{font-size:19px;margin-bottom:6px}
+.sheet p{color:#d5d9f7;margin-bottom:10px}
+.sheet .opts{display:grid;gap:8px;margin-top:12px}
+.sheet table{width:100%;border-collapse:collapse;font-size:14px}
+.sheet td{padding:5px 0;border-bottom:1px solid #1e2450;vertical-align:top}
+.sheet td:last-child{text-align:right;color:var(--g)}
+.card{width:min(100%,400px);border-radius:22px;background:linear-gradient(170deg,#1e2556,#0a0c1c);border:3px solid var(--c);padding:clamp(16px,5vw,24px);display:flex;flex-direction:column;gap:14px;box-shadow:0 0 60px color-mix(in srgb,var(--c) 35%,transparent);animation:flip .3s ease-out}
+@keyframes flip{from{transform:rotateY(80deg) scale(.9);opacity:.3}to{transform:none;opacity:1}}
+.card .hd{display:flex;justify-content:space-between;align-items:center;color:var(--c);font-weight:700;letter-spacing:.1em;font-size:13px}
+.card .hd span:last-child{font-size:26px;letter-spacing:0}
+.card .who2{font-size:13px;color:var(--mut)}
+.card .qt{font-weight:600;line-height:1.3;font-size:clamp(17px,5vw,22px)}
+.card .qt::before{content:"„";color:var(--c)}.card .qt::after{content:"“";color:var(--c)}
+.card .by{font-size:14px;color:#aab3e6;margin-top:6px}
+.card .ef{background:color-mix(in srgb,var(--c) 18%,transparent);border-radius:14px;padding:12px 14px;font-size:16px;line-height:1.4}
+.card .ef .t{display:block;color:var(--c);font-weight:700;font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px}
+.card .acts{display:flex;gap:10px}
+.card .acts button{flex:1;min-height:50px;border-radius:14px;border:0;font-weight:600}
+.card .done{background:var(--c);color:#0a0c1c}.card .alt{background:#262c55}
+.rank{display:grid;gap:8px;margin:12px 0}
+.rank div{display:flex;align-items:center;gap:10px;background:#0c1030;border:1px solid var(--line);border-radius:14px;padding:8px 10px}
+.rank div.win{border-color:var(--g);box-shadow:0 0 16px #f2b33d55}
+.rank .av{width:44px;height:44px;border-radius:50%;border:2px solid var(--c);background:#10142f center/cover;display:grid;place-items:center;font-size:22px;flex:none}
+.rank b{font-size:20px;color:var(--g);margin-left:auto}
+.rank small{display:block;color:var(--mut);font-size:12.5px}
+
+@media (min-width:900px) and (orientation:landscape){
+ #game{max-width:1180px;display:grid;grid-template-columns:minmax(0,min(92vh,720px)) minmax(320px,1fr);grid-template-rows:auto auto auto 1fr;column-gap:18px;padding:12px}
+ .top{grid-column:1/3}
+ #board{grid-row:2/5;align-self:start}
+ .chips{grid-template-columns:repeat(2,minmax(0,1fr));padding:0}
+ #log{padding:10px 0}
+ #acts{padding:10px 0;margin-top:0;align-self:start}
+ #ov{align-items:center}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<main id="setup">
+  <a class="back" href="index.html">← Popely</a>
+  <h1>POPELY<span>Virtuell · du gegen drei Musiker</span></h1>
+  <p>Würfeln, pachten, Projekte bauen, Konzerte geben. Zusammen baut ihr die Festivalbühne, bevor der Turm des Label-Lords gewinnt. Am Ende gewinnt, wer am meisten zurückgegeben hat.</p>
+  <button class="big" id="resume" hidden>▶ Weiterspielen</button>
+
+  <h2>Du</h2>
+  <div class="field"><input type="text" id="nm" maxlength="14" placeholder="Dein Name" aria-label="Dein Name" autocomplete="off"></div>
+  <div class="emo" id="emo" role="group" aria-label="Deine Figur" style="margin-top:8px"></div>
+
+  <h2>Deine drei Mitspieler</h2>
+  <div class="opps" id="opps"></div>
+  <p class="hint">Wer gibt, wer nimmt? Das zeigt sich erst beim Spielen.</p>
+  <div class="seg" style="margin-top:8px"><button id="rand">🎲 Zufällig wählen</button></div>
+
+  <h2>Würfel</h2>
+  <div class="seg" id="dsel"><button data-d="w4w8" aria-pressed="true">W4 + W8 (wie am Tisch)</button><button data-d="2w6" aria-pressed="false">2 × W6</button></div>
+
+  <button class="big" id="go">Spiel starten</button>
+  <p class="hint">Alles bleibt auf diesem Gerät. Du kannst jederzeit unterbrechen und später weiterspielen.</p>
+</main>
+
+<div id="game" hidden>
+  <div class="top">
+    <button id="menu" aria-label="Menü">☰</button>
+    <span class="pill" id="rnd"></span>
+    <span class="pill" id="stg"></span>
+    <span class="sp"></span>
+    <button id="spd" aria-label="Tempo">▶</button>
+    <button id="help" aria-label="Regeln und Preise">?</button>
+  </div>
+  <div id="board" role="img" aria-label="Spielbrett"></div>
+  <div id="log" aria-live="polite"></div>
+  <div class="chips" id="chips"></div>
+  <div id="acts"></div>
+</div>
+
+<div id="ov"><div id="slot"></div></div>
+
+<script src="karten-data.js"></script>
+<script src="popely-engine.js"></script>
+<script>
+{
+'use strict';
+const P = self.Popely, CARDS = self.POPELY_CARDS, R = P.RULES;
+const $ = id => document.getElementById(id);
+const KEY = 'popely-virtuell-v1', PREF = 'popely-virtuell-pref';
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const reduce = matchMedia('(prefers-reduced-motion:reduce)').matches;
+const EMO = ['🎸', '🥁', '🎹', '🎺', '🎻', '🎤'];
+const NPC_IDS = Object.keys(P.NPCS);
+const pl = n => n + ' Plektr' + (n === 1 ? 'um' : 'en');
+
+let G = null, UI = null, gen = 0, fast = false, pending = null;
+let pref = { name: '', emo: '🎸', opp: ['lotte', 'rocco', 'mira'], dice: 'w4w8' };
+try { Object.assign(pref, JSON.parse(localStorage.getItem(PREF) || '{}')); } catch (e) {}
+
+// ---------- Setup ----------
+function drawSetup() {
+  $('nm').value = pref.name;
+  $('emo').innerHTML = EMO.map(e => `<button aria-pressed="${e === pref.emo}" data-e="${e}">${e}</button>`).join('');
+  $('opps').innerHTML = NPC_IDS.map(id => `<button class="opp" data-id="${id}" aria-pressed="${pref.opp.includes(id)}"><img src="img/npc/${id}.jpg" alt="" width="512" height="512"><span>${P.NPCS[id].name}</span></button>`).join('');
+  document.querySelectorAll('#dsel button').forEach(b => b.setAttribute('aria-pressed', b.dataset.d === pref.dice));
+  $('go').disabled = pref.opp.length !== 3;
+  $('go').textContent = pref.opp.length === 3 ? 'Spiel starten' : `Wähle 3 Mitspieler (${pref.opp.length}/3)`;
+  let saved = null; try { saved = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) {}
+  $('resume').hidden = !(saved && saved.G && !saved.G.over);
+}
+$('emo').onclick = e => { const b = e.target.closest('button'); if (b) { pref.emo = b.dataset.e; drawSetup(); } };
+$('opps').onclick = e => {
+  const b = e.target.closest('button'); if (!b) return;
+  const id = b.dataset.id, i = pref.opp.indexOf(id);
+  if (i >= 0) pref.opp.splice(i, 1); else { if (pref.opp.length >= 3) pref.opp.shift(); pref.opp.push(id); }
+  drawSetup();
+};
+$('rand').onclick = () => { pref.opp = NPC_IDS.slice().sort(() => Math.random() - 0.5).slice(0, 3); drawSetup(); };
+$('dsel').onclick = e => { const b = e.target.closest('button'); if (b) { pref.dice = b.dataset.d; drawSetup(); } };
+$('nm').oninput = () => { pref.name = $('nm').value; };
+$('go').onclick = () => {
+  pref.name = $('nm').value.trim();
+  try { localStorage.setItem(PREF, JSON.stringify(pref)); } catch (e) {}
+  const players = [{ name: pref.name || 'Du', human: true }].concat(pref.opp.map(id => ({ name: P.NPCS[id].name, npc: id })));
+  G = P.newGame({ seed: (Math.random() * 4294967296) >>> 0, cards: CARDS, dice: pref.dice, players });
+  UI = { emo: pref.emo, bricks: [], stats: G.players.map(() => ({ miete: 0, buehne: 0, proj: 0, konz: 0, tempt: 0, gave: 0 })) };
+  start();
+};
+$('resume').onclick = () => { const s = JSON.parse(localStorage.getItem(KEY)); G = s.G; UI = s.UI; start(); };
+
+// ---------- Geometrie ----------
+const C = 13.1, BW = (100 - 2 * C) / 7, LH = (100 - 2 * C) / 6;
+function fieldBox(i) { // [x,y,w,h] in %
+  if (i === 0) return [100 - C, 100 - C, C, C];
+  if (i < 8) return [100 - C - BW * i, 100 - C, BW, C];
+  if (i === 8) return [0, 100 - C, C, C];
+  if (i < 15) return [0, 100 - C - LH * (i - 8), C, LH];
+  if (i === 15) return [0, 0, C, C];
+  if (i < 23) return [C + BW * (i - 16), 0, BW, C];
+  if (i === 23) return [100 - C, 0, C, C];
+  return [100 - C, C + LH * (i - 24), C, LH];
+}
+function fieldXY(i) { const b = fieldBox(i); return [b[0] + b[2] / 2, b[1] + b[3] / 2]; }
+const OFF = [[-2.3, -2.3], [2.3, -2.3], [-2.3, 2.3], [2.3, 2.3]];
+function tokXY(p, pos) { const [x, y] = fieldXY(pos); return [x + OFF[p][0], y + OFF[p][1]]; }
+function leaseXY(i) { // Punkt am inneren Rand des Feldes
+  const [x, y] = fieldXY(i);
+  if (i > 0 && i < 8) return [x, 100 - C + 1.6]; if (i > 8 && i < 15) return [C - 1.6, y];
+  if (i > 15 && i < 23) return [x, C - 1.6]; return [100 - C + 1.6, y];
+}
+
+// ---------- Darstellung ----------
+const col = p => `var(--c${p})`;
+function avatar(p, cls) {
+  const q = G.players[p];
+  return q.human ? `<div class="${cls}" style="--c:${col(p)}">${UI.emo}</div>` : `<div class="${cls}" style="--c:${col(p)};background-image:url(img/npc/${q.npc.id}.jpg)"></div>`;
+}
+function buildBoard() {
+  const b = $('board'); let h = '';
+  for (let i = 0; i < P.FIELDS.length; i++) { const [x, y, w, hh] = fieldBox(i); h += `<button class="fld" data-f="${i}" style="left:${x}%;top:${y}%;width:${w}%;height:${hh}%" aria-label="${esc(P.FIELDS[i].n)}"></button>`; }
+  h += '<div id="leases"></div><div id="pjs"></div><div id="stage"></div><div id="loot" hidden></div>';
+  G.players.forEach((q, p) => { h += `<div class="tok" id="tok${p}" style="--c:${col(p)}${q.human ? '' : `;background-image:url(img/npc/${q.npc.id}.jpg)`}">${q.human ? UI.emo : ''}</div>`; });
+  h += '<div id="lord">🦹</div><div id="dice" hidden><span></span><span></span></div>';
+  b.innerHTML = h;
+  G.players.forEach((q, p) => placeTok(p, q.pos));
+}
+function placeTok(p, pos) { const [x, y] = tokXY(p, pos), t = $('tok' + p); t.style.left = x + '%'; t.style.top = y + '%'; }
+function render(newBrick) {
+  $('rnd').textContent = `Runde ${G.round} / ${G.maxRounds}`;
+  $('stg').textContent = `🧱 ${G.stage} / ${G.goal}`;
+  // Pachten
+  $('leases').innerHTML = Object.keys(G.leases).map(k => { const [x, y] = leaseXY(+k); return `<div class="lease" style="left:${x}%;top:${y}%;background:${col(G.leases[k].o)};color:${col(G.leases[k].o)}"></div>`; }).join('');
+  // offene Projekte in den drei Feldern rechts
+  const tops = [17.5, 36.7, 55.9];
+  $('pjs').innerHTML = G.open.map((id, k) => {
+    const pr = P.PROJECTS[id], cost = R[pr.size].cost, paid = P.megaPaid(G, id);
+    return `<button class="pj" data-pj="${id}" style="top:${tops[k]}%" aria-label="${esc(pr.n)}"><b>${pr.i}</b><span>${esc(pr.n)}</span><em>${pr.size === 'mega' ? paid + '/' + cost : cost}</em>${paid ? `<i class="bar" style="width:${Math.round(100 * paid / cost)}%"></i>` : ''}</button>`;
+  }).join('');
+  // Bühne
+  const cells = []; for (let i = 0; i < G.goal; i++) { const o = UI.bricks[i]; cells.push(i < G.stage ? `<i class="on${newBrick && i === G.stage - 1 ? ' new' : ''}" style="--c:${col(o === undefined ? 0 : o)}"></i>` : '<i></i>'); }
+  $('stage').style.gridTemplateColumns = `repeat(${G.goal > 12 ? 4 : 4},1fr)`;
+  $('stage').innerHTML = cells.join('');
+  // Turm
+  const loot = Object.values(G.tower.loot).reduce((a, b) => a + b, 0), lt = $('loot');
+  lt.hidden = !(loot || G.tower.bricks);
+  lt.textContent = 'Im Turm: ' + [G.tower.bricks ? '🧱 ' + G.tower.bricks : '', loot ? '🎸 ' + loot : ''].filter(Boolean).join(' · ');
+  // Label-Lord
+  const L = $('lord'); let lx = 50, ly = 22;
+  if (G.lordAt !== null) { const [x, y] = tokXY(G.lordAt, G.players[G.lordAt].pos); lx = x + (x > 50 ? -5 : 5); ly = y + (y > 50 ? -5 : 5); }
+  L.style.left = lx + '%'; L.style.top = ly + '%';
+  // Spieler
+  $('chips').innerHTML = G.players.map((q, p) => `<div class="chip${p === G.turn && !G.over ? ' act' : ''}" id="chip${p}" style="--c:${col(p)}">${avatar(p, 'av')}<div class="nm">${esc(q.name)}</div><div class="st">🎸 <b>${q.pl}</b> · ⭐ <b>${q.pts}</b><br>🔊 ${q.amp} · 🧱 ${q.bricks}${q.kept.length ? ' · 🃏 ' + q.kept.length : ''}</div></div>`).join('');
+  G.players.forEach((q, p) => { const t = $('tok' + p); t.classList.toggle('act', p === G.turn && !G.over); t.classList.toggle('zz', q.auto); });
+}
+function bump(p) { const c = $('chip' + p); if (c) { c.classList.remove('bump'); void c.offsetWidth; c.classList.add('bump'); } }
+function say(p, html) {
+  const head = p === null || p === undefined ? '' : (G.players[p].human ? `<span class="me" style="--c:${col(p)}">${UI.emo}</span>` : `<img src="img/npc/${G.players[p].npc.id}.jpg" alt="" style="--c:${col(p)}">`);
+  $('log').innerHTML = head + `<span>${html}</span>`;
+}
+const N = p => `<b>${esc(G.players[p].name)}</b>`;
+const wait = ms => new Promise(r => setTimeout(r, fast ? Math.min(ms * 0.3, 260) : ms));
+function alive(g) { if (g !== gen) throw new Error('stale'); }
+
+// ---------- Fenster ----------
+function sheet(html, mid) { const o = $('ov'); $('slot').innerHTML = html; o.classList.add('on'); o.classList.toggle('mid', !!mid); const b = $('slot').querySelector('button'); if (b) b.focus({ preventScroll: true }); }
+function closeSheet() { $('ov').classList.remove('on'); $('slot').innerHTML = ''; }
+function choose(title, text, opts, mid) { // opts: [{l, v, main, sub, dis}]
+  return new Promise(res => {
+    sheet(`<div class="sheet"><h2>${title}</h2>${text ? `<p>${text}</p>` : ''}<div class="opts">${opts.map((o, i) => `<button class="btn${o.main ? ' main' : ''}" data-i="${i}"${o.dis ? ' disabled' : ''}><span>${o.l}</span>${o.sub ? `<small>${o.sub}</small>` : ''}</button>`).join('')}</div></div>`, mid);
+    $('slot').onclick = e => { const b = e.target.closest('button[data-i]'); if (!b) return; $('slot').onclick = null; closeSheet(); res(opts[+b.dataset.i].v); };
+  });
+}
+function cardColor(c) { return c.k.includes('lord') ? 'var(--r)' : c.k.includes('zaub') ? 'var(--g)' : c.d === 'S' ? 'var(--s)' : 'var(--u)'; }
+function cardLabel(c) { return c.k.includes('lord') ? 'LABEL-LORD' : c.k.includes('zaub') ? 'ZAUBERER BASTI' : c.d === 'S' ? 'STERNENFUNK' : 'UNPLUGGED'; }
+function cardHtml(c, who, buttons) {
+  return `<div class="card" style="--c:${cardColor(c)}"><div class="hd"><span>${cardLabel(c)}</span><span>${c.i}</span></div>
+  <div class="who2">${who}</div>
+  ${c.q ? `<div><div class="qt">${esc(c.q)}</div><div class="by">— ${esc(c.w)}${c.w && c.w !== 'Basti' ? ' · zu Gast bei Basti' : ''}</div></div>` : ''}
+  <div class="ef"><span class="t">${esc(c.t)}</span>${c.e}</div><div class="acts">${buttons}</div></div>`;
+}
+function showCard(c, p, canVeto) {
+  const q = G.players[p], human = q.human;
+  return new Promise(res => {
+    let timer = null;
+    const fin = v => { clearTimeout(timer); $('slot').onclick = null; closeSheet(); res(v); };
+    const vb = canVeto !== null ? '<button class="alt" data-v="veto">🃏 Liebevoll widersprechen</button>' : '';
+    sheet(cardHtml(c, human ? 'Du ziehst eine Karte' : `${esc(q.name)} zieht eine Karte`, vb + '<button class="done" data-v="ok">Weiter</button>'), true);
+    $('slot').onclick = e => { const b = e.target.closest('button[data-v]'); if (b) fin(b.dataset.v); };
+    if (!human && canVeto === null) timer = setTimeout(() => fin('ok'), fast ? 1300 : 3200);
+  });
+}
+
+// ---------- Fragen an den Menschen ----------
+async function ask(p, kind, d) {
+  const g = gen; render();
+  let r;
+  switch (kind) {
+    case 'roll': r = await mainButton(d.again ? '🎲 Nochmal würfeln' : '🎲 Würfeln'); break;
+    case 'lease': { const f = P.FIELDS[d.field];
+      r = await choose(`${f.i} ${esc(f.n)} pachten?`, `Für ${R.pachtRunden} Runden ums Brett. Landet jemand hier, wählst du: Miete nehmen (${pl(R.miete[f.s - 1])}) oder Offene Bühne (1 Punkt für dich).`,
+        [{ l: 'Pachten', sub: pl(d.price), v: true, main: true }, { l: 'Nein, weiter', v: false }]); break; }
+    case 'guest': { const f = P.FIELDS[d.field];
+      r = await choose(`${esc(G.players[d.guest].name)} ist zu Gast`, `Auf deinem Feld ${f.i} ${esc(f.n)}. Was machst du?`,
+        [{ l: '🎤 Offene Bühne', sub: G.players[p].amp > 0 ? 'du legst 1 Verstärker ab' : '+1 Punkt für dich', v: 'buehne', main: true }, { l: 'Miete nehmen', sub: '+' + pl(d.miete), v: 'miete' }]); break; }
+    case 'autopilot': r = await choose('🤖 Du bist im Autopilot', 'Eine Runde aussetzen, oder 1 Gage zahlen und aufwachen?', [{ l: 'Aufwachen', sub: pl(R.gage), v: 'pay', main: true }, { l: 'Aussetzen', v: 'skip' }]); break;
+    case 'verlockung': r = await choose('Verlockung', 'Nimm 2 Gagen und 1 Ego-Verstärker (−2 Punkte am Ende). Oder lass es.', [{ l: 'Lass es', v: false, main: true }, { l: 'Nehmen', sub: '+20 🎸, +1 🔊', v: true }]); break;
+    case 'angebot': r = await choose('Das große Angebot', 'Der Label-Lord bietet dir 4 Gagen und 2 Ego-Verstärker. Oder lehn ab und nimm 1 Punkt.', [{ l: 'Ablehnen', sub: '+1 ⭐', v: false, main: true }, { l: 'Annehmen', sub: '+40 🎸, +2 🔊', v: true }]); break;
+    case 'knopf': r = await choose('Knopf gedrückt', 'Ab in den Autopilot. Oder zahl 1 Gage und bleib, wo du bist.', [{ l: 'Wach bleiben', sub: pl(R.gage), v: 'pay', main: true }, { l: 'Autopilot', v: 'auto' }]); break;
+    case 'lauter': r = await choose('Je lauter, desto …', `Du hast die meisten Punkte. Nimm 1 Ego-Verstärker, oder gib ${esc(G.players[d.low].name)} 1 Gage.`, [{ l: `1 Gage an ${esc(G.players[d.low].name)}`, sub: '−10 🎸', v: 'give', main: true }, { l: 'Verstärker nehmen', sub: '+1 🔊', v: 'amp' }]); break;
+    case 'join': r = await choose(esc(d.card.t), d.jam ? 'Mitmachen kostet 1 Gage und bringt 1 Punkt. Machen mindestens zwei mit, kommt 1 Baustein auf die Bühne.' : 'Zahl 1 Gage gegen den Label-Lord. Zahlen mindestens zwei, muss er zurück in den Turm und alle Zahlenden bekommen 1 Punkt.',
+      [{ l: 'Ich mache mit', sub: pl(R.gage), v: true, main: true }, { l: 'Diesmal nicht', v: false }]); break;
+    case 'partner': { const pr = P.PROJECTS[d.id];
+      const o = G.players.map((q, i) => i).filter(i => i !== p).map(i => ({ l: `Mit ${esc(G.players[i].name)}`, sub: G.players[i].pl < d.half ? 'hat zu wenig' : '', dis: G.players[i].pl < d.half, v: i }));
+      r = await choose('Zwei plus zwei ist fünf', `Baut zusammen ${pr.i} ${esc(pr.n)}: jeder zahlt ${pl(d.half)}, beide bekommen den vollen Punkt.`, G.players[p].pl < d.half ? [{ l: 'Ich habe zu wenig Plektren', v: null }] : o.concat([{ l: 'Lieber nicht', v: null }])); break; }
+    case 'partnerOk': { const pr = P.PROJECTS[d.id];
+      r = await choose(`${esc(G.players[d.from].name)} fragt dich`, `Wollen wir zusammen ${pr.i} ${esc(pr.n)} bauen? Jeder zahlt etwa ${pl(d.half)}, beide bekommen 1 Punkt.`, [{ l: 'Ja, gern', sub: pl(R.klein.cost - d.half), v: true, main: true }, { l: 'Nein', v: false }]); break; }
+    case 'gefuehl': r = await choose('Gefühlsführerschein', 'Sag laut in einem Satz, wie du dich gerade fühlst. Die anderen hören zu.', [{ l: 'Gesagt. Der Tisch nickt', sub: '+1 ⭐', v: true, main: true }], true); break;
+    case 'frage': r = await choose('Echte Frage', `Stell ${esc(G.players[d.left].name)} eine echte Frage. (Laut. Eine Antwort bekommst du in der nächsten Version.)`, [{ l: 'Gefragt', sub: 'beide +1 ⭐', v: true, main: true }], true); break;
+    case 'action': r = await actionMenu(p, d); break;
+  }
+  alive(g);
+  return r;
+}
+function mainButton(label) {
+  return new Promise(res => { $('acts').innerHTML = `<button class="btn main" id="mb">${label}</button>`; $('mb').onclick = () => { $('acts').innerHTML = ''; res(true); }; pending = () => res(true); });
+}
+function actionMenu(p, d) {
+  return new Promise(res => {
+    const q = G.players[p]; let h = '';
+    for (const o of d.opts) {
+      if (o.a === 'project') { const pr = P.PROJECTS[o.id]; h += `<button class="btn" data-a="project" data-id="${o.id}"${o.ok ? '' : ' disabled'}><span>${pr.i} ${esc(pr.n)} bauen</span><small>${o.cost} 🎸 → ${R[pr.size].pts} ⭐ + 🧱</small></button>`; }
+      else if (o.a === 'mega') { const pr = P.PROJECTS[o.id]; h += `<button class="btn" data-a="mega" data-id="${o.id}"><span>${pr.i} ${esc(pr.n)}: einzahlen</span><small>${o.paid}/${R.mega.cost} · 13 ⭐ geteilt</small></button>`; }
+      else if (o.a === 'concert') h += `<button class="btn" data-a="concert"${o.ok ? '' : ' disabled'}><span>🎤 Konzert geben</span><small>${o.cost} 🎸 → ${R.konzert.pts} ⭐ + 🧱</small></button>`;
+      else if (o.a === 'brick') h += `<button class="btn" data-a="brick"${o.ok ? '' : ' disabled'}><span>🔧 Baustein in der Werkstatt</span><small>${o.cost} 🎸 → 🧱</small></button>`;
+    }
+    if (d.T.rabatt) h += `<div class="hint" style="margin:0 2px">🌱 Projekt-Feld: Die Bank legt ${R.projektFeldRabatt} Plektren dazu.</div>`;
+    h = '<button class="btn main" data-a="end">Zug beenden</button>' + (h ? '<div class="hint" style="margin:2px 2px 0">Oder vorher noch:</div>' + h : '');
+    $('acts').innerHTML = h;
+    $('acts').onclick = async e => {
+      const b = e.target.closest('button[data-a]'); if (!b || b.disabled) return;
+      const a = b.dataset.a, id = +b.dataset.id;
+      if (a === 'mega') {
+        const need = R.mega.cost - P.megaPaid(G, id), max = Math.min(need, q.pl);
+        const am = [10, 25, 50].filter(x => x < max).map(x => ({ l: pl(x), v: x })).concat([{ l: max === need ? `Den Rest: ${pl(max)}` : `Alles: ${pl(max)}`, v: max, main: true }, { l: 'Doch nicht', v: 0 }]);
+        const amt = await choose('Gemeinsam bauen', `Wie viel zahlst du ein? Es fehlen noch ${pl(need)}. Die 13 Punkte werden nach Anteil geteilt. Das zählt als dein Projekt in diesem Zug.`, am);
+        if (!amt) return;
+        $('acts').onclick = null; $('acts').innerHTML = ''; return res({ a: 'mega', id, amt });
+      }
+      $('acts').onclick = null; $('acts').innerHTML = '';
+      res(a === 'project' ? { a, id } : { a });
+    };
+  });
+}
+
+// ---------- Ereignisse aus der Engine ----------
+async function emit(ev) {
+  const g = gen; alive(g);
+  const me = p => G.players[p].human;
+  switch (ev.t) {
+    case 'turn':
+      save(); render(); say(ev.p, me(ev.p) ? 'Du bist dran.' : `${N(ev.p)} ist dran.`);
+      if (!me(ev.p)) { $('acts').innerHTML = `<div class="wait">${esc(G.players[ev.p].name)} spielt …</div>`; await wait(650); }
+      break;
+    case 'roll': {
+      const d = $('dice'); d.hidden = false; d.classList.remove('roll'); void d.offsetWidth; d.classList.add('roll');
+      d.children[0].textContent = ev.a; d.children[1].textContent = ev.b;
+      say(ev.p, `${me(ev.p) ? 'Du würfelst' : N(ev.p) + ' würfelt'} ${ev.a} + ${ev.b} = <b>${ev.a + ev.b}</b>${ev.a === ev.b ? ' · Pasch!' : ''}`);
+      await wait(750); break; }
+    case 'lord':
+      render(); bump(ev.v);
+      say(ev.v, ev.trick ? `🦹 Der Label-Lord will ${N(ev.v)} beklauen. Zaubertrick! Er geht leer aus.` : `🦹 Der Label-Lord zieht zu ${N(ev.v)} und klaut ${pl(ev.got)}.`);
+      await wait(1300); break;
+    case 'move': {
+      const n = P.FIELDS.length;
+      if (reduce) placeTok(ev.p, ev.to); else for (let s = 1; s <= ev.steps; s++) { placeTok(ev.p, (ev.from + s) % n); await wait(150); alive(g); }
+      const f = P.FIELDS[ev.to]; $('dice').hidden = true;
+      say(ev.p, `${me(ev.p) ? 'Du landest' : N(ev.p) + ' landet'} auf ${f.i} <b>${esc(f.n)}</b>${f.s ? ' ' + '★'.repeat(f.s) : ''}.`);
+      render(); await wait(600); break; }
+    case 'jump': placeTok(ev.p, ev.to); render(); say(ev.p, `🌀 ${me(ev.p) ? 'Du musst' : N(ev.p) + ' muss'} in den Autopilot.`); await wait(1000); break;
+    case 'start':
+      render(); bump(ev.p);
+      say(ev.p, `☀️ ${me(ev.p) ? 'Du kommst' : N(ev.p) + ' kommt'} am Start vorbei: +${R.gehalt + ev.div} 🎸${ev.ego ? ` · mehr als ${R.egoGrenze} Plektren: <b>+1 Ego-Verstärker 🔊</b>` : ''}${ev.ended.length ? ' · Pacht läuft aus: ' + ev.ended.map(k => esc(P.FIELDS[k].n)).join(', ') : ''}`);
+      await wait(ev.ego ? 1700 : 1000); break;
+    case 'lease': render(); say(ev.p, `${me(ev.p) ? 'Du pachtest' : N(ev.p) + ' pachtet'} ${esc(P.FIELDS[ev.field].n)} für ${pl(ev.price)}.`); await wait(900); break;
+    case 'rent': UI.stats[ev.o].miete++; render(); bump(ev.o); say(ev.o, `${me(ev.o) ? 'Du nimmst' : N(ev.o) + ' nimmt'} ${pl(ev.n)} Miete von ${N(ev.guest)}.`); await wait(1100); break;
+    case 'open': UI.stats[ev.o].buehne++; render(); bump(ev.o); say(ev.o, `🎤 Offene Bühne! ${me(ev.o) ? 'Du lädst' : N(ev.o) + ' lädt'} ${N(ev.guest)} ein${ev.amp ? ' und legt 1 Verstärker ab.' : '.'}`); await wait(1100); break;
+    case 'tax': render(); say(ev.p, `🪞 Ego-Steuer: ${pl(ev.n)} an die Bank.`); await wait(900); break;
+    case 'card': { const r = await showCard(ev.card, ev.p, ev.canVeto); alive(g); return r; }
+    case 'veto': render(); say(ev.p, `🃏 ${me(ev.p) ? 'Du widersprichst' : N(ev.p) + ' widerspricht'} liebevoll. Die Karte gilt nicht.`); await wait(1300); break;
+    case 'pay': render(); bump(ev.p); say(ev.p, `${me(ev.p) ? 'Du zahlst' : N(ev.p) + ' zahlt'} ${pl(ev.n)} (${esc(ev.why)}).`); await wait(800); break;
+    case 'tempt': if (ev.yes) UI.stats[ev.p].tempt++; render(); bump(ev.p);
+      say(ev.p, ev.yes ? `${me(ev.p) ? 'Du nimmst' : N(ev.p) + ' nimmt'} das Geld: +${ev.n} 🎸, +${ev.amp} 🔊.` : `${me(ev.p) ? 'Du lehnst' : N(ev.p) + ' lehnt'} ab.`); await wait(1200); break;
+    case 'give': if (!ev.forced) UI.stats[ev.from].gave++; render(); bump(ev.to); say(ev.from, `${me(ev.from) ? 'Du gibst' : N(ev.from) + ' gibt'} ${N(ev.to)} ${pl(ev.n)}.`); await wait(900); break;
+    case 'gain': render(); bump(ev.p); say(ev.p, `+${ev.n} 🎸 für ${N(ev.p)}.`); await wait(700); break;
+    case 'amp': render(); bump(ev.p); say(ev.p, ev.n > 0 ? `${me(ev.p) ? 'Du nimmst' : N(ev.p) + ' nimmt'} 1 Ego-Verstärker 🔊.` : `${me(ev.p) ? 'Du legst' : N(ev.p) + ' legt'} 1 Ego-Verstärker ab.`); await wait(1000); break;
+    case 'nothing': say(ev.p, ev.why ? `Nichts passiert (${esc(ev.why)}).` : 'Nichts passiert.'); await wait(700); break;
+    case 'say': say(ev.p, ev.kind === 'gefuehl' ? `${N(ev.p)} sagt, wie es gerade geht. Der Tisch nickt.` : `${N(ev.p)} stellt ${N(ev.left)} eine echte Frage.`); await wait(1300); break;
+    case 'aurora': render(); say(null, '👶 Aurora lacht. Alle bekommen 1 Gehalt.'); await wait(1200); break;
+    case 'joined': render(); say(null, ev.who.length ? `${ev.who.map(N).join(', ')} ${ev.who.length === 1 ? 'macht' : 'machen'} mit.${!ev.jam && ev.who.length < 2 ? ' Zu wenige: der Label-Lord bleibt.' : ''}` : 'Niemand macht mit.'); await wait(1300); break;
+    case 'declined': say(ev.p, `${N(ev.p)} sagt nein.`); await wait(1000); break;
+    case 'beat': UI.bricks.splice(G.stage, 1); render(); say(null, '🦹 Der Beat ist weg! Der Label-Lord trägt einen Baustein in seinen Turm.'); await wait(1500); break;
+    case 'rescue': say(ev.p, `✨ ${me(ev.p) ? 'Du holst' : N(ev.p) + ' holt'} einen Baustein aus dem Turm zurück.`); await wait(900); break;
+    case 'keep': render(); say(ev.p, `🃏 ${me(ev.p) ? 'Du behältst' : N(ev.p) + ' behält'} die Karte „${esc(ev.card.t)}“.`); await wait(900); break;
+    case 'lordhome': while (UI.bricks.length < G.stage) UI.bricks.push(G.turn); render(); say(null, ev.giveBack ? '🧙 Zauberer Basti! Der Label-Lord muss zurück in den Turm. Alles Geklaute kommt zurück.' : '🚀 Der Label-Lord muss zurück in seinen Turm.'); await wait(1500); break;
+    case 'project': { Object.keys(ev.shares).forEach(k => UI.stats[k].proj++); const pr = P.PROJECTS[ev.id]; render();
+      say(ev.p, `${pr.i} <b>${esc(pr.n)}</b> ist fertig! ${Object.keys(ev.pts).map(k => `${N(+k)} +${ev.pts[k]} ⭐`).join(', ')}`); await wait(1500); break; }
+    case 'megapay': render(); say(ev.p, `${me(ev.p) ? 'Du zahlst' : N(ev.p) + ' zahlt'} ${pl(ev.n)} in ${esc(P.PROJECTS[ev.id].n)} ein (${ev.paid}/${R.mega.cost}).`); await wait(1200); break;
+    case 'concert': UI.stats[ev.p].konz++; render(); say(ev.p, `🎤 ${me(ev.p) ? 'Du gibst' : N(ev.p) + ' gibt'} ein Konzert.`); await wait(800); break;
+    case 'workshop': say(ev.p, `🔧 ${me(ev.p) ? 'Du baust' : N(ev.p) + ' baut'} in der Werkstatt einen Baustein.`); await wait(700); break;
+    case 'brick': UI.bricks[G.stage - 1] = ev.p; UI.bricks.length = G.stage; render(true); bump(ev.p); await wait(700); break;
+    case 'lastbrick': say(null, '🎉 Der letzte Baustein liegt! Die Runde wird noch zu Ende gespielt.'); await wait(1800); break;
+    case 'pts': render(); bump(ev.p); break;
+    case 'skip': say(ev.p, `🤖 ${me(ev.p) ? 'Du setzt' : N(ev.p) + ' setzt'} eine Runde aus.`); await wait(1000); break;
+    case 'again': say(ev.p, `⚡ Einfach machen: ${me(ev.p) ? 'du würfelst' : N(ev.p) + ' würfelt'} sofort noch einmal.`); await wait(700); break;
+    case 'endturn': render(); break;
+  }
+  alive(g);
+}
+
+// ---------- Spielschleife ----------
+function save() { try { localStorage.setItem(KEY, JSON.stringify({ G, UI })); } catch (e) {} }
+async function start() {
+  const g = ++gen;
+  $('setup').hidden = true; $('game').hidden = false; closeSheet();
+  buildBoard(); render(); scrollTo(0, 0);
+  const io = { cards: CARDS, emit, ask };
+  try { while (!G.over) { await P.playTurn(G, io); alive(g); } save(); endScreen(); }
+  catch (e) { if (e.message !== 'stale') { console.error(e); say(null, 'Fehler: ' + esc(e.message)); } }
+}
+function endScreen() {
+  render(); $('acts').innerHTML = '<button class="btn main" id="again2">Ergebnis ansehen</button>'; $('again2').onclick = endScreen;
+  const rk = P.ranking(G), won = G.over === 'buehne';
+  say(null, won ? '🎉 Die Festivalbühne steht!' : '🗼 Die Zeit ist um. Der Turm gewinnt.');
+  const rows = rk.map((r, k) => { const s = UI.stats[r.i];
+    return `<div class="${won && k === 0 ? 'win' : ''}" style="--c:${col(r.i)}">${avatar(r.i, 'av')}<span>${esc(r.name)}<small>${r.pts} ⭐ − ${R.egoMalus * r.amp} (🔊 ${r.amp}) · 🧱 ${r.bricks}</small><small>Offene Bühne ${s.buehne}× · Miete ${s.miete}× · Projekte ${s.proj} · Konzerte ${s.konz}${s.tempt ? ' · Verlockung ' + s.tempt + '×' : ''}</small></span><b>${r.score}</b></div>`; }).join('');
+  sheet(`<div class="sheet"><h2>${won ? '🎉 Die Festivalbühne steht!' : '🗼 Der Turm gewinnt'}</h2>
+   <p>${won ? `Ihr habt den Label-Lord gemeinsam besiegt. Am meisten zurückgegeben hat <b>${esc(rk[0].name)}</b>.${G.players[rk[0].i].human ? ' Glückwunsch!' : ''} Jetzt spielt Basti das Abschlusslied.` : `Die Bühne ist nach ${G.maxRounds} Runden nicht fertig (${G.stage} von ${G.goal} Bausteinen). Niemand gewinnt. Mehr geben, weniger nehmen?`}</p>
+   <div class="rank">${rows}</div><div class="opts"><button class="btn main" id="ng">Neues Spiel</button><button class="btn" id="cl" style="justify-content:center">Brett ansehen</button></div></div>`, true);
+  $('ng').onclick = () => { closeSheet(); toSetup(true); };
+  $('cl').onclick = closeSheet;
+}
+function toSetup(clear) { gen++; if (clear) try { localStorage.removeItem(KEY); } catch (e) {} $('game').hidden = true; $('setup').hidden = false; drawSetup(); scrollTo(0, 0); }
+
+// ---------- Menü, Hilfe, Feld-Info ----------
+$('spd').onclick = () => { fast = !fast; $('spd').textContent = fast ? '⏩' : '▶'; $('spd').setAttribute('aria-label', fast ? 'Tempo: schnell' : 'Tempo: normal'); };
+function info(html) { const had = $('ov').classList.contains('on'); if (had) return; sheet(`<div class="sheet">${html}<div class="opts"><button class="btn main" id="ix">Schließen</button></div></div>`); $('ix').onclick = closeSheet; }
+$('menu').onclick = () => { if ($('ov').classList.contains('on')) return;
+  sheet('<div class="sheet"><h2>Menü</h2><p>Dein Spiel ist gespeichert. Du kannst später weiterspielen.</p><div class="opts"><button class="btn main" id="m1">Weiterspielen</button><button class="btn" id="m2">Zum Start (Spiel bleibt gespeichert)</button><button class="btn" id="m3">Neues Spiel (dieses löschen)</button></div></div>');
+  $('m1').onclick = closeSheet; $('m2').onclick = () => { closeSheet(); toSetup(false); }; $('m3').onclick = () => { closeSheet(); toSetup(true); }; };
+$('help').onclick = () => info(`<h2>Regeln und Preise</h2>
+ <p>Es gewinnt, wer am meisten zurückgibt: die meisten Punkte ⭐, wenn die Festivalbühne fertig ist. Plektren 🎸 zählen am Ende nicht. Ist die Bühne nach ${G.maxRounds} Runden nicht fertig, gewinnt der Turm.</p>
+ <table>
+ <tr><td>Startgeld</td><td>${R.start}</td></tr><tr><td>Gehalt am Start</td><td>${R.gehalt} + 1 je fertigem Projekt</td></tr>
+ <tr><td>Ego-Verstärker 🔊</td><td>mit über ${R.egoGrenze} 🎸 am Start vorbei · −${R.egoMalus} ⭐</td></tr>
+ <tr><td>Pacht ★ / ★★ / ★★★ / ★★★★</td><td>${R.pacht.join(' / ')} · ${R.pachtRunden} Runden</td></tr>
+ <tr><td>Miete</td><td>${R.miete.join(' / ')} · oder Offene Bühne (+1 ⭐)</td></tr>
+ <tr><td>Projekt klein</td><td>${R.klein.cost} → ${R.klein.pts} ⭐ + 🧱</td></tr><tr><td>Projekt mittel</td><td>${R.mittel.cost} → ${R.mittel.pts} ⭐ + 🧱</td></tr>
+ <tr><td>Projekt mega (gemeinsam)</td><td>${R.mega.cost} → ${R.mega.pts} ⭐ geteilt + 🧱</td></tr>
+ <tr><td>Konzert (1× pro Zug)</td><td>${R.konzert.cost} → ${R.konzert.pts} ⭐ + 🧱</td></tr>
+ <tr><td>Werkstatt-Feld</td><td>${R.werkstattBaustein} → 🧱</td></tr><tr><td>Projekt-Feld</td><td>Projekt ${R.projektFeldRabatt} billiger</td></tr>
+ <tr><td>Pasch</td><td>Label-Lord klaut der reichsten Person 1 Gage</td></tr>
+ <tr><td>Bühne fertig</td><td>${G.goal} Bausteine</td></tr></table>
+ <p class="hint" style="margin-top:10px">Die Zahlen sind für das virtuelle Spiel abgestimmt und weichen an drei Stellen von der gedruckten Preistafel ab: Gehalt, Konzert, Bausteine pro Person.</p>`);
+$('board').onclick = e => {
+  const pj = e.target.closest('[data-pj]');
+  if (pj) { const pr = P.PROJECTS[+pj.dataset.pj], c = R[pr.size], paid = P.megaPaid(G, pr.id);
+    return info(`<h2>${pr.i} ${esc(pr.n)}</h2><p>Projekt ${pr.size}: ${c.cost} Plektren → ${c.pts} Punkte und 1 Baustein.${pr.size === 'mega' ? ` Gemeinsam in Raten bezahlbar, Punkte nach Anteil. Bisher eingezahlt: ${paid}.` : ''} Bauen kannst du in deinem Zug nach dem Würfeln.</p>`); }
+  const b = e.target.closest('.fld'); if (!b) return;
+  const i = +b.dataset.f, f = P.FIELDS[i], L = G.leases[i];
+  const T = { start: 'Wer vorbeikommt, bekommt Gehalt.', S: 'Zieh eine Sternenfunk-Karte: die Welt, Versuchungen, Zufall.', U: 'Zieh eine Unplugged-Karte: nach innen schauen, geben, gemeinsam.', steuer: '1 Gage an die Bank.', pause: 'Einfach ausruhen.', werkstatt: `Hier kannst du für ${pl(R.werkstattBaustein)} einen Baustein für die Bühne bauen.`, autopilot: 'Nur zuschauen. Wer hierher geschickt wird, setzt aus oder zahlt 1 Gage.', projekt: `Hier baust du ein Projekt ${R.projektFeldRabatt} Plektren billiger.`, goauto: 'Ab in den Autopilot!' };
+  info(`<h2>${f.i} ${esc(f.n)}</h2><p>${f.t === 'pacht' ? `${'★'.repeat(f.s)} · ${esc(f.g)}. Pacht ${pl(R.pacht[f.s - 1])} für ${R.pachtRunden} Runden, Miete ${pl(R.miete[f.s - 1])} oder Offene Bühne.<br>${L ? `Gepachtet von <b>${esc(G.players[L.o].name)}</b> (noch ${L.left}× am Start vorbei).` : 'Frei.'}` : T[f.t]}</p>`);
+};
+document.addEventListener('keydown', e => { if ((e.key === ' ' || e.key === 'Enter') && e.target === document.body) { const b = $('mb'); if (b) { e.preventDefault(); b.click(); } } });
+
+drawSetup();
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('../sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
